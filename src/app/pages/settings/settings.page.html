@@ -1,0 +1,132 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Settings</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!-- Backend URL Configuration Section -->
+  <div class="settings-section">
+    <h2>Backend Configuration</h2>
+    
+    <!-- Current Backend URL -->
+    <ion-card *ngIf="backendUrl">
+      <ion-card-header>
+        <ion-card-title>Current Backend URL</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p class="url-display">{{ backendUrl }}</p>
+        <div class="button-group">
+          <ion-button expand="block" fill="outline" (click)="copyToClipboard()">
+            <ion-icon name="copy-outline" slot="start"></ion-icon>
+            Copy URL
+          </ion-button>
+          <ion-button expand="block" fill="outline" color="danger" (click)="clearBackendUrl()">
+            <ion-icon name="trash-outline" slot="start"></ion-icon>
+            Clear
+          </ion-button>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- No URL Message -->
+    <ion-card *ngIf="!backendUrl">
+      <ion-card-content>
+        <p class="no-url-message">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          No backend URL configured. Please scan a QR code or enter a URL manually.
+        </p>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- QR Code Scanner Section -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Scan Backend URL</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p class="description">Scan the QR code from your ngrok tunnel to automatically configure your backend URL.</p>
+        
+        <ion-button 
+          expand="block" 
+          color="success"
+          [disabled]="isScanning"
+          (click)="startQrScanning()">
+          <ion-icon name="qr-code-outline" slot="start"></ion-icon>
+          {{ isScanning ? 'Scanning...' : 'Scan QR Code' }}
+        </ion-button>
+
+        <ion-button 
+          expand="block" 
+          fill="outline"
+          color="danger"
+          [disabled]="!isScanning"
+          (click)="stopQrScanning()">
+          <ion-icon name="close-circle-outline" slot="start"></ion-icon>
+          Stop Scanning
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Manual URL Entry Section -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Manual URL Entry</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p class="description">Or enter the backend URL manually if you prefer.</p>
+        
+        <ion-button 
+          expand="block" 
+          fill="outline"
+          (click)="showUrlForm = !showUrlForm">
+          <ion-icon name="create-outline" slot="start"></ion-icon>
+          {{ showUrlForm ? 'Hide Form' : 'Enter URL Manually' }}
+        </ion-button>
+
+        <!-- Manual URL Form -->
+        <div *ngIf="showUrlForm" class="manual-url-form ion-margin-top">
+          <ion-item>
+            <ion-label position="floating">Backend URL</ion-label>
+            <ion-input 
+              [(ngModel)]="manualUrl"
+              type="url"
+              placeholder="https://example.ngrok.io/api">
+            </ion-input>
+          </ion-item>
+
+          <div class="button-group">
+            <ion-button expand="block" color="success" (click)="saveManualUrl()">
+              <ion-icon name="save-outline" slot="start"></ion-icon>
+              Save URL
+            </ion-button>
+            <ion-button expand="block" fill="outline" (click)="showUrlForm = false">
+              <ion-icon name="close-outline" slot="start"></ion-icon>
+              Cancel
+            </ion-button>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- API Testing Section -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>API Information</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p class="description">
+          Your app is configured to make API requests to:
+        </p>
+        <p class="api-url">{{ backendUrl || 'Not configured' }}</p>
+        <p class="info-text">
+          <ion-icon name="information-circle-outline"></ion-icon>
+          All API requests will use this URL as the base endpoint.
+        </p>
+      </ion-card-content>
+    </ion-card>
+  </div>
+</ion-content>

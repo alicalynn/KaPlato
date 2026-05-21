@@ -1,0 +1,143 @@
+<ion-card class="reviews-container">
+  <!-- Header with Rating Summary -->
+  <ion-card-header class="rating-header">
+    <div class="rating-summary">
+      <div class="average-rating">
+        <div class="big-rating">{{ getAverageRating() }}</div>
+        <div class="stars">
+          <ion-icon *ngFor="let i of getStarArray(5)" 
+            [name]="i <= Math.round(stats?.average || 0) ? 'star' : 'star-outline'"
+            [class.filled]="i <= Math.round(stats?.average || 0)">
+          </ion-icon>
+        </div>
+        <div class="review-count">{{ stats?.total_reviews || 0 }} reviews</div>
+      </div>
+
+      <!-- Rating Distribution -->
+      <div class="distribution">
+        <div class="dist-item" *ngFor="let rating of [5, 4, 3, 2, 1]">
+          <span class="rating-label">{{ rating }}★</span>
+          <div class="bar-container">
+            <div class="bar-fill" [style.width]="getStarPercentage(rating)"></div>
+          </div>
+          <span class="count">{{ getStarCount(rating) }}</span>
+        </div>
+      </div>
+    </div>
+  </ion-card-header>
+
+  <!-- Status Breakdown -->
+  <ion-card-content *ngIf="stats?.status_breakdown" class="status-section">
+    <ion-label class="section-title">Karenderia Status Reports</ion-label>
+    <div class="status-badges">
+      <ion-chip 
+        *ngFor="let statusEntry of stats!.status_breakdown | keyvalue" 
+        [color]="getStatusBadgeColor(statusEntry.key)">
+        <ion-icon [name]="statusEntry.key === 'open' ? 'checkmark-circle' : 'close-circle'"></ion-icon>
+        <ion-label>{{ getStatusLabel(statusEntry.key) }}: {{ statusEntry.value }}</ion-label>
+      </ion-chip>
+    </div>
+  </ion-card-content>
+
+  <!-- Action Buttons -->
+  <div class="action-buttons" *ngIf="isAuthenticated">
+    <ion-button fill="outline" color="primary" (click)="openLeaveReviewModal()" expand="block">
+      <ion-icon name="create-outline" slot="start"></ion-icon>
+      Leave a Review
+    </ion-button>
+    <ion-button fill="outline" color="warning" (click)="openReportIssueModal()" expand="block">
+      <ion-icon name="alert-circle-outline" slot="start"></ion-icon>
+      Report Issue
+    </ion-button>
+  </div>
+
+  <!-- Reviews List -->
+  <ion-card-content class="reviews-list-section">
+    <ion-label class="section-title">Recent Reviews</ion-label>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-state">
+      <ion-spinner></ion-spinner>
+      <p>Loading reviews...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && reviews.length === 0" class="empty-state">
+      <ion-icon name="chatbubble-outline" size="large"></ion-icon>
+      <p>No reviews yet. Be the first to review this karenderia!</p>
+    </div>
+
+    <!-- Reviews List -->
+    <div *ngIf="!isLoading && reviews.length > 0" class="reviews-list">
+      <div class="review-item" *ngFor="let review of reviews">
+        <div class="review-header">
+          <div class="reviewer-info">
+            <strong>{{ review.reviewer?.name || 'Anonymous' }}</strong>
+            <small class="review-date">{{ review.created_at | date:'mediumDate' }}</small>
+          </div>
+          <div class="review-rating">
+            <ion-icon *ngFor="let i of getStarArray(5)" 
+              [name]="i <= review.rating ? 'star' : 'star-outline'"
+              [class.filled]="i <= review.rating">
+            </ion-icon>
+          </div>
+        </div>
+
+        <!-- Karenderia Status Badge -->
+        <div class="status-badge">
+          <ion-chip [color]="getStatusBadgeColor(review.karenderia_status)">
+            {{ getStatusLabel(review.karenderia_status) }}
+          </ion-chip>
+        </div>
+
+        <!-- Review Comment -->
+        <p class="review-comment" *ngIf="review.comment">{{ review.comment }}</p>
+
+        <!-- Optional Ratings -->
+        <div class="optional-ratings" *ngIf="review.food_quality_rating || review.delivery_experience_rating">
+          <div *ngIf="review.food_quality_rating" class="rating-row">
+            <span class="label">Food Quality:</span>
+            <div class="mini-stars">
+              <ion-icon *ngFor="let i of getStarArray(5)" 
+                [name]="i <= review.food_quality_rating ? 'star' : 'star-outline'"
+                size="small" [class.filled]="i <= review.food_quality_rating">
+              </ion-icon>
+            </div>
+          </div>
+          <div *ngIf="review.delivery_experience_rating" class="rating-row">
+            <span class="label">Delivery:</span>
+            <div class="mini-stars">
+              <ion-icon *ngFor="let i of getStarArray(5)" 
+                [name]="i <= review.delivery_experience_rating ? 'star' : 'star-outline'"
+                size="small" [class.filled]="i <= review.delivery_experience_rating">
+              </ion-icon>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div class="review-tags" *ngIf="review.tags && review.tags.length > 0">
+          <ion-chip size="small" *ngFor="let tag of review.tags" color="secondary">
+            {{ tag }}
+          </ion-chip>
+        </div>
+
+        <!-- Food Feedback -->
+        <p class="food-feedback" *ngIf="review.food_feedback">
+          <strong>Food Feedback:</strong> {{ review.food_feedback }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="!isLoading && totalPages > 1">
+      <ion-button fill="outline" (click)="previousPage()" [disabled]="currentPage === 1">
+        <ion-icon name="chevron-back-outline"></ion-icon>
+      </ion-button>
+      <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+      <ion-button fill="outline" (click)="nextPage()" [disabled]="currentPage === totalPages">
+        <ion-icon name="chevron-forward-outline"></ion-icon>
+      </ion-button>
+    </div>
+  </ion-card-content>
+</ion-card>

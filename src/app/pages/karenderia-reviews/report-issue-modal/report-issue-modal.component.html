@@ -1,0 +1,182 @@
+<ion-header>
+  <ion-toolbar color="danger">
+    <ion-buttons slot="start">
+      <ion-button (click)="closeModal()">
+        <ion-icon name="close"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Report Issue</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="report-issue-content">
+  <div class="karenderia-header danger">
+    <h2>{{ karenderiaName }}</h2>
+    <p>Help us maintain food safety and quality standards</p>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submitReport()">
+    <ion-card class="critical-warning">
+      <ion-card-content>
+        <ion-icon name="alert-circle" size="large"></ion-icon>
+        <p>
+          Serious issues like allergies, food safety violations, or health concerns are escalated to our admin team immediately.
+          Please provide detailed information to help us investigate.
+        </p>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Report Type Selection -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Issue Type</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p class="section-description">Select the type of issue you want to report</p>
+        <ion-item>
+          <ion-label position="stacked">Issue Category *</ion-label>
+          <ion-select formControlName="report_type" placeholder="Select an issue type">
+            <ion-select-option *ngFor="let type of reportTypes" [value]="type.value">
+              <ion-icon [name]="type.icon"></ion-icon>
+              {{ type.label }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <!-- Selected Type Badge -->
+        <div class="selected-type" *ngIf="form.get('report_type')?.value">
+          <ion-chip [color]="getReportTypeBadgeColor(form.get('report_type')?.value)">
+            <ion-icon 
+              [name]="getReportTypeIcon(form.get('report_type')?.value)">
+            </ion-icon>
+            {{ getReportTypeLabel(form.get('report_type')?.value) }}
+          </ion-chip>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Detailed Description -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Issue Details</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <!-- Main Description -->
+        <ion-item>
+          <ion-label position="stacked">
+            Description *
+            <small class="char-count">
+              ({{ form.get('description')?.value?.length || 0 }}/max)
+            </small>
+          </ion-label>
+          <ion-textarea 
+            formControlName="description"
+            placeholder="Please describe the issue in detail. What happened? When? How did it affect you? (minimum 10 characters)"
+            rows="5">
+          </ion-textarea>
+          <ion-note slot="end" *ngIf="form.get('description')?.hasError('minlength')" color="danger">
+            Minimum 10 characters required
+          </ion-note>
+        </ion-item>
+
+        <!-- Evidence/Additional Info -->
+        <ion-item>
+          <ion-label position="stacked">
+            Evidence or Additional Details
+            <small class="char-count">
+              ({{ form.get('evidence')?.value?.length || 0 }}/2000)
+            </small>
+          </ion-label>
+          <ion-textarea 
+            formControlName="evidence"
+            placeholder="Any additional evidence or details? (Optional, max 2000 characters)"
+            rows="4">
+          </ion-textarea>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- File Attachments -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>
+          Attachments (Optional)
+          <small>({{ attachedFiles.length }}/3)</small>
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content class="attachments-section">
+        <p class="section-description">Upload photos or documents (max 3 files)</p>
+        
+        <!-- Upload Button -->
+        <ion-button 
+          type="button" 
+          expand="block" 
+          fill="outline"
+          color="primary"
+          (click)="selectFiles()"
+          [disabled]="attachedFiles.length >= 3">
+          <ion-icon name="cloud-upload-outline" slot="start"></ion-icon>
+          Add Files
+        </ion-button>
+
+        <!-- Files List -->
+        <div class="files-list" *ngIf="attachedFiles.length > 0">
+          <ion-list>
+            <ion-item *ngFor="let file of attachedFiles; let i = index" lines="inset">
+              <ion-icon name="document-attach" slot="start"></ion-icon>
+              <ion-label>
+                <p><strong>{{ file.name }}</strong></p>
+                <p>{{ getFileSize(file) }}</p>
+              </ion-label>
+              <ion-button 
+                slot="end" 
+                fill="clear" 
+                color="danger"
+                (click)="removeFile(i)">
+                <ion-icon name="close"></ion-icon>
+              </ion-button>
+            </ion-item>
+          </ion-list>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Important Information -->
+    <ion-card class="info-card">
+      <ion-card-content>
+        <div class="info-item">
+          <ion-icon name="information-circle-outline" size="small"></ion-icon>
+          <p>All reports are treated confidentially and reviewed by our safety team</p>
+        </div>
+        <div class="info-item">
+          <ion-icon name="shield-checkmark-outline" size="small"></ion-icon>
+          <p>Serious issues are escalated immediately for investigation</p>
+        </div>
+        <div class="info-item">
+          <ion-icon name="time-outline" size="small"></ion-icon>
+          <p>You may be contacted for more information about your report</p>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Submit Button -->
+    <div class="button-section">
+      <ion-button 
+        type="submit" 
+        color="danger" 
+        expand="block" 
+        [disabled]="form.invalid || isSaving">
+        <ion-icon name="send" slot="start"></ion-icon>
+        Submit Report
+      </ion-button>
+      <ion-button 
+        type="button" 
+        fill="outline" 
+        color="medium" 
+        expand="block"
+        (click)="closeModal()">
+        Cancel
+      </ion-button>
+    </div>
+  </form>
+</ion-content>

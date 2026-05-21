@@ -8,7 +8,9 @@ import { IonicModule, IonicRouteStrategy } from '@ionic/angular';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { environment } from '../environments/environment';
-import { ngrokBypassInterceptor } from './interceptors/ngrok-bypass.interceptor';
+import { QrScannerService } from './services/qr-scanner.service';
+import { ApiConfigService } from './services/api-config.service';
+import { QRScanner } from '@ionic-native/qr-scanner/ngx';
 
 @NgModule({
   declarations: [AppComponent],
@@ -19,7 +21,10 @@ import { ngrokBypassInterceptor } from './interceptors/ngrok-bypass.interceptor'
   ],
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    provideHttpClient(withFetch(), withInterceptors([ngrokBypassInterceptor]))
+    provideHttpClient(withFetch()),
+    QrScannerService,
+    ApiConfigService,
+    QRScanner
   ],
   bootstrap: [AppComponent],
 })

@@ -5,6 +5,7 @@ import { AlertController } from '@ionic/angular';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { ApiConfigService } from './api-config.service';
 
 export interface User {
   id: string;
@@ -72,12 +73,20 @@ export interface MealPlan {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = environment.apiUrl;
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private http: HttpClient, private router: Router, private alertController: AlertController) {
+  constructor(
+    private http: HttpClient, 
+    private router: Router, 
+    private alertController: AlertController,
+    private apiConfigService: ApiConfigService
+  ) {
     this.checkStoredAuth();
+  }
+
+  private get apiUrl(): string {
+    return this.apiConfigService.getApiUrl();
   }
 
   private checkStoredAuth(): void {
@@ -100,6 +109,7 @@ export class AuthService {
   }
 
   login(credentials: LoginCredentials): Observable<AuthResponse> {
+    console.log('🔐 Login attempt - using API URL:', this.apiUrl);
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, credentials)
       .pipe(
         tap(response => {
@@ -114,7 +124,7 @@ export class AuthService {
           this.currentUserSubject.next(storedUser);
         }),
         catchError(error => {
-          console.error('Login error:', error);
+          console.error('❌ Login error:', error);
           throw error;
         })
       );

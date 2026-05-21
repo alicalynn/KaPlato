@@ -5,7 +5,6 @@ import { FormsModule } from '@angular/forms';
 import { EnhancedNutritionService, MenuItemNutrition } from '../services/enhanced-nutrition.service';
 import { FavoritesService, FavoriteItem } from '../services/favorites.service';
 import { KarenderiaService, MenuItem } from '../services/karenderia.service';
-import { NutritionManagerComponent } from '../components/nutrition-manager.component';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -13,7 +12,7 @@ import { Subscription } from 'rxjs';
   templateUrl: './nutrition-demo.page.html',
   styleUrls: ['./nutrition-demo.page.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule, FormsModule, NutritionManagerComponent],
+  imports: [IonicModule, CommonModule, FormsModule],
   schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class NutritionDemoPage implements OnInit {
