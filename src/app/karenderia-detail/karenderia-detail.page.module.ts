@@ -5,6 +5,7 @@ import { IonicModule } from '@ionic/angular';
 import { RouterModule } from '@angular/router';
 
 import { KarenderiaDetailPage } from './karenderia-detail.page';
+import { KarenderiaReviewsModule } from '../pages/karenderia-reviews/karenderia-reviews.module';
 
 const routes = [
   {
@@ -18,7 +19,8 @@ const routes = [
     CommonModule,
     FormsModule,
     IonicModule,
-    RouterModule.forChild(routes)
+    RouterModule.forChild(routes),
+    KarenderiaReviewsModule
   ],
   declarations: [KarenderiaDetailPage]
 })

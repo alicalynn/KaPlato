@@ -182,6 +182,10 @@ const routes: Routes = [
     path: 'supplier-request-detail/:id',
     loadComponent: () => import('./pages/supplier-request-detail/supplier-request-detail.page').then(m => m.SupplierRequestDetailPage),
     canActivate: [AuthGuard]
+  },
+  {
+    path: 'settings',
+    loadComponent: () => import('./pages/settings/settings.page').then(m => m.SettingsPage)
   }
 
 ];

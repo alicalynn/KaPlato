@@ -1,0 +1,182 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-button (click)="closeModal()">
+        <ion-icon name="close"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Leave a Review</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="leave-review-content">
+  <div class="karenderia-header">
+    <h2>{{ karenderiaName }}</h2>
+    <p>Help other customers by sharing your experience</p>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submitReview()">
+    <ion-card>
+      <!-- Main Rating -->
+      <ion-card-header>
+        <ion-card-title>Overall Rating</ion-card-title>
+      </ion-card-header>
+      <ion-card-content class="rating-section">
+        <p class="section-description">How would you rate this karenderia?</p>
+        <div class="star-selector">
+          <ion-icon *ngFor="let i of getStarArray(5)" 
+            [name]="i <= selectedRating ? 'star' : 'star-outline'"
+            (click)="setRating(i)"
+            [class.selected]="i <= selectedRating"
+            size="large">
+          </ion-icon>
+        </div>
+        <p class="rating-label" *ngIf="selectedRating > 0">
+          {{ selectedRating }} star{{ selectedRating !== 1 ? 's' : '' }} - 
+          {{ ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][selectedRating] }}
+        </p>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Karenderia Status -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Karenderia Status</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p class="section-description">What status was the karenderia?</p>
+        <ion-select formControlName="karenderia_status" placeholder="Select status">
+          <ion-select-option *ngFor="let status of karenderiaStatuses" 
+            [value]="status.value">
+            {{ status.label }}
+          </ion-select-option>
+        </ion-select>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Optional Ratings -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Detailed Experience (Optional)</ion-card-title>
+      </ion-card-header>
+      <ion-card-content class="optional-ratings">
+        <!-- Food Quality -->
+        <div class="rating-item">
+          <label>Food Quality</label>
+          <div class="mini-star-selector">
+            <ion-icon *ngFor="let i of getStarArray(5)" 
+              [name]="i <= selectedFoodQuality ? 'star' : 'star-outline'"
+              (click)="setFoodQuality(i)"
+              [class.selected]="i <= selectedFoodQuality"
+              size="small">
+            </ion-icon>
+          </div>
+        </div>
+
+        <!-- Delivery Experience -->
+        <div class="rating-item">
+          <label>Delivery Experience</label>
+          <div class="mini-star-selector">
+            <ion-icon *ngFor="let i of getStarArray(5)" 
+              [name]="i <= selectedDelivery ? 'star' : 'star-outline'"
+              (click)="setDelivery(i)"
+              [class.selected]="i <= selectedDelivery"
+              size="small">
+            </ion-icon>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Comments -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Your Feedback</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <!-- Main Comment -->
+        <ion-item>
+          <ion-label position="stacked">Review Comment (Optional)</ion-label>
+          <ion-textarea 
+            formControlName="comment"
+            placeholder="Share your experience... (max 2000 characters)"
+            rows="4">
+          </ion-textarea>
+        </ion-item>
+
+        <!-- Food Feedback -->
+        <ion-item>
+          <ion-label position="stacked">Food Feedback (Optional)</ion-label>
+          <ion-textarea 
+            formControlName="food_feedback"
+            placeholder="What did you think about the food? (max 1000 characters)"
+            rows="3">
+          </ion-textarea>
+        </ion-item>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Tags -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>
+          Add Tags
+          <small>({{ selectedTags.length }}/5)</small>
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content class="tags-section">
+        <p class="section-description">Select up to 5 tags that describe your experience</p>
+        <div class="tag-grid">
+          <ion-chip 
+            *ngFor="let tag of tagSuggestions"
+            [color]="isTagSelected(tag) ? 'primary' : 'medium'"
+            (click)="toggleTag(tag)"
+            [outline]="!isTagSelected(tag)">
+            {{ tag }}
+          </ion-chip>
+        </div>
+
+        <!-- Selected Tags Display -->
+        <div class="selected-tags" *ngIf="selectedTags.length > 0">
+          <p class="selected-label">Selected Tags:</p>
+          <div class="tag-display">
+            <ion-chip *ngFor="let tag of selectedTags" color="primary" (ionChipClick)="toggleTag(tag)">
+              {{ tag }}
+              <ion-icon name="close"></ion-icon>
+            </ion-chip>
+          </div>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Disclaimer -->
+    <ion-card class="disclaimer-card">
+      <ion-card-content>
+        <p>
+          <ion-icon name="information-circle-outline" size="small"></ion-icon>
+          Your review will be moderated before appearing on this page. We appreciate honest feedback!
+        </p>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Submit Button -->
+    <div class="button-section">
+      <ion-button 
+        type="submit" 
+        color="primary" 
+        expand="block" 
+        [disabled]="selectedRating === 0 || isSaving">
+        <ion-icon name="checkmark-circle" slot="start"></ion-icon>
+        Submit Review
+      </ion-button>
+      <ion-button 
+        type="button" 
+        fill="outline" 
+        color="medium" 
+        expand="block"
+        (click)="closeModal()">
+        Cancel
+      </ion-button>
+    </div>
+  </form>
+</ion-content>

@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable, of } from 'rxjs';
 import { map, tap, catchError, switchMap, timeout } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
+import { ApiConfigService } from './api-config.service';
 
 export interface UserProfile {
   uid: string;
@@ -63,13 +64,13 @@ export interface UserProfile {
   providedIn: 'root'
 })
 export class UserService {
-  private apiUrl = environment.apiUrl;
   private currentUserProfileSubject = new BehaviorSubject<UserProfile | null>(null);
   public currentUserProfile$ = this.currentUserProfileSubject.asObservable();
 
   constructor(
     private http: HttpClient,
-    private authService: AuthService
+    private authService: AuthService,
+    private apiConfigService: ApiConfigService
   ) {
     // Load user profile when auth state changes, but don't block the app
     this.authService.currentUser$.subscribe(user => {
@@ -99,6 +100,10 @@ export class UserService {
   private getAuthHeaders(): { [key: string]: string } {
     const token = this.authService.getAuthToken();
     return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
+  private get apiUrl(): string {
+    return this.apiConfigService.getApiUrl();
   }
 
   loadUserProfile(): Observable<UserProfile> {

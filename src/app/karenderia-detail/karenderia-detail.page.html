@@ -220,6 +220,14 @@
     <p *ngIf="selectedCategory !== 'all'">No items available in this category. Try selecting a different category.</p>
   </div>
 
+  <!-- Karenderia Reviews Section -->
+  <div *ngIf="!isLoading && karenderia" class="reviews-section">
+    <app-karenderia-reviews 
+      [karenderiaId]="+karenderiaId" 
+      [karenderiaName]="karenderia.name">
+    </app-karenderia-reviews>
+  </div>
+
   <!-- Cart Summary Fab -->
   <ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="cart.length > 0">
     <ion-fab-button color="success" (click)="viewCart()">
