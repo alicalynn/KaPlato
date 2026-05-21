@@ -105,6 +105,20 @@ export class OwnerShellComponent implements OnDestroy {
       const profile = await this.userService.loadUserProfile().toPromise();
       this.ownerStatus = this.resolveOwnerStatus(profile);
     } catch {
+      const currentUser = this.authService.getCurrentUser();
+
+      if (currentUser?.role === 'karenderia_owner') {
+        const applicationStatus = (currentUser.applicationStatus || '').toLowerCase();
+
+        if (applicationStatus === 'pending' || applicationStatus === 'rejected') {
+          this.ownerStatus = applicationStatus;
+          return;
+        }
+
+        this.ownerStatus = 'approved';
+        return;
+      }
+
       this.ownerStatus = 'unknown';
     }
   }

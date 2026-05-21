@@ -103,9 +103,15 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, credentials)
       .pipe(
         tap(response => {
+          const applicationStatus = response.user.applicationStatus || response.karenderia?.status;
+          const storedUser: User = {
+            ...response.user,
+            applicationStatus
+          };
+
           localStorage.setItem('auth_token', response.access_token);
-          localStorage.setItem('user_data', JSON.stringify(response.user));
-          this.currentUserSubject.next(response.user);
+          localStorage.setItem('user_data', JSON.stringify(storedUser));
+          this.currentUserSubject.next(storedUser);
         }),
         catchError(error => {
           console.error('Login error:', error);

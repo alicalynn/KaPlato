@@ -6,7 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { MealFilterComponent } from '../components/meal-filter/meal-filter.component';
 import { MealFilterService, MealFilterOptions, FilterStats } from '../services/meal-filter.service';
-import { MenuService } from '../services/menu.service';
+import { KarenderiaService } from '../services/karenderia.service';
 import { AllergenDetectionService } from '../services/allergen-detection.service';
 
 @Component({
@@ -23,7 +23,6 @@ export class MealsBrowsePage implements OnInit, OnDestroy {
   showFilters = false;
   currentFilters: MealFilterOptions = {};
   filterStats: FilterStats | null = null;
-  private menuItemsSubscription: Subscription | null = null;
   activeAllergens: string[] = [];
   avoidRiskyDishes = true;
 
@@ -33,7 +32,7 @@ export class MealsBrowsePage implements OnInit, OnDestroy {
     private loadingController: LoadingController,
     private toastController: ToastController,
     private mealFilterService: MealFilterService,
-    private menuService: MenuService,
+    private karenderiaService: KarenderiaService,
     private allergenDetectionService: AllergenDetectionService
   ) {}
 
@@ -47,10 +46,11 @@ export class MealsBrowsePage implements OnInit, OnDestroy {
     const effectiveAllergens = this.allergenDetectionService.getEffectiveUserAllergens();
     this.activeAllergens = effectiveAllergens.map(allergen => allergen.name);
 
-    if (this.activeAllergens.length > 0 && this.avoidRiskyDishes) {
-      this.currentFilters.allergenSafe = true;
-      this.currentFilters.specificAllergens = [...this.activeAllergens];
-    }
+    // DON'T auto-apply allergen filters
+    // Let users see all meals and manually enable safety filters if desired
+    // This way they can browse meals and choose to enable allergen filtering
+    this.currentFilters.allergenSafe = false;
+    this.currentFilters.specificAllergens = [];
   }
 
   async ionViewWillEnter() {
@@ -59,8 +59,8 @@ export class MealsBrowsePage implements OnInit, OnDestroy {
   }
 
   async refreshMeals() {
-    // Force reload from backend to get the latest menu items
-    await this.menuService.loadMenuItems();
+    // Force reload meals from all karenderias
+    await this.loadMeals();
   }
 
   async doRefresh(event: any) {
@@ -93,49 +93,77 @@ export class MealsBrowsePage implements OnInit, OnDestroy {
   async loadMeals() {
     this.isLoading = true;
     try {
-      // Unsubscribe from previous subscription if exists
-      if (this.menuItemsSubscription) {
-        this.menuItemsSubscription.unsubscribe();
-      }
+      console.log('📱 Loading meals from all karenderias...');
       
-      // Subscribe to real menu items from the backend
-      this.menuItemsSubscription = this.menuService.menuItems$.subscribe(menuItems => {
-        console.log('Loaded menu items from backend:', menuItems);
-        this.allMeals = menuItems.map(item => ({
-          id: item.id,
-          name: item.name,
-          description: item.description,
-          price: item.price,
-          calories: item.nutritionalInfo?.calories || 0,
-          protein: item.nutritionalInfo?.protein || 0,
-          carbs: item.nutritionalInfo?.carbs || 0,
-          fat: item.nutritionalInfo?.fat || 0,
-          image: item.image,
-          karenderia_name: (item as any).karenderia_name || 'Unknown Karenderia',
-          karenderia_id: (item as any).karenderia_id || '',
-          category: item.category,
-          spicyLevel: this.mapSpiciness((item as any).spiciness_level),
-          isVegetarian: item.allergens?.length === 0 || false,
-          isVegan: false, // Would need dietary tags from backend
-          allergens: item.allergens || [],
-          ingredients: item.ingredients?.map(ing =>
-            typeof ing === 'string' ? ing : ((ing as any).ingredientName || (ing as any).name || '')
-          ) || [],
-          average_rating: (item as any).average_rating || 0,
-          total_reviews: (item as any).total_reviews || 0,
-          available: item.isAvailable !== false
-        }));
-        
-        this.filteredMeals = [...this.allMeals];
-        this.updateFilterStats();
-        this.isLoading = false;
+      // Get all karenderias first
+      const karenderias = await new Promise<any[]>((resolve, reject: any) => {
+        this.karenderiaService.getAllKarenderias().subscribe({
+          next: (data: any) => resolve(data || []),
+          error: (err: any) => {
+            console.error('❌ Error loading karenderias:', err);
+            reject(err);
+          }
+        });
       });
       
-      // Force reload menu items from backend
-      await this.menuService.loadMenuItems();
+      console.log('✅ Loaded', karenderias.length, 'karenderias');
+      
+      // Aggregate meals from all karenderias
+      const allMealsFromKarenderias: any[] = [];
+      
+      for (const karenderia of karenderias) {
+        try {
+          const menuItems = await new Promise<any[]>((resolve, reject: any) => {
+            this.karenderiaService.getMenuItemsForKarenderia(karenderia.id || karenderia.karenderiaId).subscribe({
+              next: (items: any) => resolve(items || []),
+              error: (err: any) => {
+                console.warn(`⚠️ Error loading menu for karenderia ${karenderia.id}:`, err);
+                resolve([]); // Continue with next karenderia on error
+              }
+            });
+          });
+          
+          // Map menu items with karenderia info
+          const mappedItems = menuItems.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            description: item.description || 'Delicious dish',
+            price: item.price,
+            calories: item.nutritionalInfo?.calories || 0,
+            protein: item.nutritionalInfo?.protein || 0,
+            carbs: item.nutritionalInfo?.carbs || 0,
+            fat: item.nutritionalInfo?.fat || 0,
+            image: item.imageUrl || 'assets/images/food-placeholder.jpg',
+            karenderia_name: karenderia.name || 'Unknown Karenderia',
+            karenderia_id: karenderia.id || karenderia.karenderiaId || '',
+            category: item.category || 'Main Dish',
+            spicyLevel: 'Mild',
+            isVegetarian: item.allergens?.length === 0 || false,
+            isVegan: false,
+            allergens: item.allergens || [],
+            ingredients: item.ingredients?.map((ing: any) =>
+              typeof ing === 'string' ? ing : ((ing as any).ingredientName || (ing as any).name || '')
+            ) || [],
+            average_rating: (item as any).average_rating || 0,
+            total_reviews: (item as any).total_reviews || 0,
+            available: item.isAvailable !== false
+          }));
+          
+          allMealsFromKarenderias.push(...mappedItems);
+          console.log(`✅ Loaded ${menuItems.length} meals from ${karenderia.name}`);
+        } catch (error) {
+          console.warn(`⚠️ Failed to load meals from ${karenderia.name}:`, error);
+          // Continue loading other karenderias
+        }
+      }
+      
+      console.log('✅ Total meals loaded:', allMealsFromKarenderias.length);
+      this.allMeals = allMealsFromKarenderias;
+      this.filteredMeals = [...this.allMeals];
+      this.updateFilterStats();
       
     } catch (error) {
-      console.error('Error loading meals:', error);
+      console.error('❌ Error loading meals:', error);
       this.allMeals = [];
       this.filteredMeals = [];
       this.updateFilterStats();
@@ -146,9 +174,7 @@ export class MealsBrowsePage implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    if (this.menuItemsSubscription) {
-      this.menuItemsSubscription.unsubscribe();
-    }
+    // Cleanup if needed
   }
 
   private mapSpiciness(level: number | undefined): string {

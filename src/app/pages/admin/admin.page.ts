@@ -56,7 +56,7 @@ export class AdminPage implements OnInit {
       });
 
       // Load all menu items across all karenderias
-      const response = await this.http.get<any>('http://localhost:8000/api/admin/menu-items', { headers }).toPromise();
+      const response = await this.http.get<any>('https://bodacious-cascade-onshore.ngrok-free.dev/api/admin/menu-items', { headers }).toPromise();
       
       if (response && response.data) {
         this.menuItems = response.data;
@@ -76,7 +76,7 @@ export class AdminPage implements OnInit {
         'Content-Type': 'application/json'
       });
 
-      const response = await this.http.get<any>('http://localhost:8000/api/admin/karenderias', { headers }).toPromise();
+      const response = await this.http.get<any>('https://bodacious-cascade-onshore.ngrok-free.dev/api/admin/karenderias', { headers }).toPromise();
       
       if (response && response.success && response.data) {
         this.karenderias = response.data;
@@ -100,7 +100,7 @@ export class AdminPage implements OnInit {
       });
 
       // Try to get sales analytics from the admin controller
-      const response = await this.http.get<any>('http://localhost:8000/api/admin/sales-analytics', { headers }).toPromise();
+      const response = await this.http.get<any>('https://bodacious-cascade-onshore.ngrok-free.dev/api/admin/sales-analytics', { headers }).toPromise();
       
       if (response && response.data) {
         this.salesData = response.data.recent_orders || [];
@@ -158,7 +158,7 @@ export class AdminPage implements OnInit {
 
       const body = { status: 'active', notes: 'Approved by admin' };
       
-      await this.http.put<any>(`http://localhost:8000/api/admin/karenderias/${karenderia.id}/status`, body, { headers }).toPromise();
+      await this.http.put<any>(`https://bodacious-cascade-onshore.ngrok-free.dev/api/admin/karenderias/${karenderia.id}/status`, body, { headers }).toPromise();
       
       // Update the local status
       karenderia.status = 'active';
@@ -199,7 +199,7 @@ export class AdminPage implements OnInit {
 
       const body = { status: 'rejected', notes: 'Rejected by admin' };
       
-      await this.http.put<any>(`http://localhost:8000/api/admin/karenderias/${karenderia.id}/status`, body, { headers }).toPromise();
+      await this.http.put<any>(`https://bodacious-cascade-onshore.ngrok-free.dev/api/admin/karenderias/${karenderia.id}/status`, body, { headers }).toPromise();
       
       // Update the local status
       karenderia.status = 'rejected';

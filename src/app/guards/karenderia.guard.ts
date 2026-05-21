@@ -42,6 +42,12 @@ export class KarenderiaGuard implements CanActivate {
         }),
         catchError(error => {
           console.error('KarenderiaGuard: Failed to verify owner status:', error);
+          const fallbackStatus = this.resolveOwnerStatus(this.authService.getCurrentUser() as any);
+
+          if (fallbackStatus === 'approved') {
+            return of(this.authorizeOwnerStatus(fallbackStatus, state.url));
+          }
+
           this.authService.logout();
           this.router.navigate(['/login']);
           return of(false);

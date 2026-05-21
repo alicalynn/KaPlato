@@ -4,6 +4,7 @@ import { KarenderiaInfoService } from '../services/karenderia-info.service';
 import { KarenderiaService } from '../services/karenderia.service';
 import { LoadingController, ToastController, AlertController } from '@ionic/angular';
 import { AuthService } from '../services/auth.service';
+import { Subscription } from 'rxjs';
 
 interface BusinessInfo {
   name: string;
@@ -67,6 +68,7 @@ export class KarenderiaSettingsPage implements OnInit {
   karenderiaStatus: 'approved' | 'pending' | 'rejected' | 'unknown' = 'unknown';
   rejectionReason = '';
   isSaving = false;
+  private karenderiaSubscription?: Subscription;
 
   businessInfo: BusinessInfo = {
     name: 'Loading...',
@@ -133,7 +135,13 @@ export class KarenderiaSettingsPage implements OnInit {
   ) { }
 
   async ngOnInit() {
+    this.subscribeToKarenderiaUpdates();
+    await this.karenderiaInfoService.reloadKarenderiaData();
     await this.loadSettings();
+  }
+
+  ngOnDestroy() {
+    this.karenderiaSubscription?.unsubscribe();
   }
 
   // Navigation methods
@@ -156,8 +164,9 @@ export class KarenderiaSettingsPage implements OnInit {
 
     try {
       const response = await this.karenderiaService.getCurrentUserKarenderia().toPromise();
-      if (response?.success && response?.data) {
-        const karenderia = response.data;
+      const karenderia = response?.data || response;
+
+      if (karenderia) {
         this.currentKarenderiaId = karenderia.id ?? null;
         this.karenderiaStatus = this.normalizeKarenderiaStatus(karenderia.status);
         this.rejectionReason = karenderia.rejection_reason || '';
@@ -183,10 +192,64 @@ export class KarenderiaSettingsPage implements OnInit {
           longitude: karenderia.longitude || 123.8854,
           address: karenderia.address || ''
         };
+        this.karenderiaInfoService.updateKarenderiaData(karenderia);
+        return;
       }
+
+      this.applyCachedKarenderiaFallback();
     } catch (error) {
       console.error('Failed to load settings from backend:', error);
+      this.applyCachedKarenderiaFallback();
     }
+  }
+
+  private subscribeToKarenderiaUpdates() {
+    this.karenderiaSubscription = this.karenderiaInfoService.currentKarenderia$.subscribe(karenderia => {
+      if (!karenderia) {
+        return;
+      }
+
+      this.currentKarenderiaId = karenderia.id ? Number(karenderia.id) : this.currentKarenderiaId;
+      this.karenderiaStatus = this.normalizeKarenderiaStatus(karenderia.status);
+      this.rejectionReason = karenderia.rejection_reason || this.rejectionReason;
+      this.businessInfo = {
+        name: karenderia.business_name || karenderia.name || this.businessInfo.name,
+        phone: karenderia.phone || this.businessInfo.phone,
+        email: karenderia.business_email || karenderia.email || this.businessInfo.email,
+        cuisineType: this.businessInfo.cuisineType,
+        description: karenderia.description || this.businessInfo.description,
+        address: karenderia.address || this.businessInfo.address
+      };
+      this.locationSettings = {
+        latitude: karenderia.latitude || this.locationSettings.latitude,
+        longitude: karenderia.longitude || this.locationSettings.longitude,
+        address: karenderia.address || this.locationSettings.address
+      };
+    });
+  }
+
+  private applyCachedKarenderiaFallback() {
+    const cachedKarenderia = this.karenderiaInfoService.getCurrentKarenderia();
+    if (!cachedKarenderia) {
+      return;
+    }
+
+    this.currentKarenderiaId = cachedKarenderia.id ? Number(cachedKarenderia.id) : this.currentKarenderiaId;
+    this.karenderiaStatus = this.normalizeKarenderiaStatus(cachedKarenderia.status);
+    this.rejectionReason = cachedKarenderia.rejection_reason || this.rejectionReason;
+    this.businessInfo = {
+      name: cachedKarenderia.business_name || cachedKarenderia.name || this.businessInfo.name,
+      phone: cachedKarenderia.phone || this.businessInfo.phone,
+      email: cachedKarenderia.business_email || cachedKarenderia.email || this.businessInfo.email,
+      cuisineType: this.businessInfo.cuisineType,
+      description: cachedKarenderia.description || this.businessInfo.description,
+      address: cachedKarenderia.address || this.businessInfo.address
+    };
+    this.locationSettings = {
+      latitude: cachedKarenderia.latitude || this.locationSettings.latitude,
+      longitude: cachedKarenderia.longitude || this.locationSettings.longitude,
+      address: cachedKarenderia.address || this.locationSettings.address
+    };
   }
 
   async saveChanges() {

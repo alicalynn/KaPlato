@@ -53,6 +53,12 @@ export class InventoryWorkflowGuard implements CanActivate {
           return false;
         }),
         catchError(() => {
+          const fallbackStatus = this.resolveOwnerStatus(this.authService.getCurrentUser() as any);
+
+          if (fallbackStatus === 'approved') {
+            return of(true);
+          }
+
           this.router.navigate(['/karenderia-settings']);
           return of(false);
         })

@@ -9,7 +9,8 @@ export const environment = {
     enableDebugMode: false,
     lazyLoadDelay: 100
   },
-  apiUrl: 'http://localhost:8000/api', // Change to your backend URL - stored in .env for flexibility
+  // apiUrl: 'http://localhost:8000/api', // Change to your backend URL - stored in .env for flexibility
+  apiUrl: 'https://bodacious-cascade-onshore.ngrok-free.dev/api',
   spoonacular: {
     apiKey: '', // API key must be set via backend endpoint - never expose in frontend
     baseUrl: 'https://api.spoonacular.com'

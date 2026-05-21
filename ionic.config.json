@@ -1,5 +1,7 @@
 {
   "name": "KaPlato",
-  "integrations": {},
+  "integrations": {
+    "capacitor": {}
+  },
   "type": "angular"
 }

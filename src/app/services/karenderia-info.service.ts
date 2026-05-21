@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { KarenderiaService } from './karenderia.service';
 import { Karenderia } from '../models/menu.model';
+import { AuthService } from './auth.service';
+import { UserService } from './user.service';
 
 @Injectable({
   providedIn: 'root'
@@ -10,7 +12,11 @@ export class KarenderiaInfoService {
   private currentKarenderiaSubject = new BehaviorSubject<Karenderia | null>(null);
   public currentKarenderia$ = this.currentKarenderiaSubject.asObservable();
 
-  constructor(private karenderiaService: KarenderiaService) {
+  constructor(
+    private karenderiaService: KarenderiaService,
+    private authService: AuthService,
+    private userService: UserService
+  ) {
     // Load data immediately if user is already logged in
     const token = localStorage.getItem('auth_token');
     if (token) {
@@ -58,19 +64,29 @@ export class KarenderiaInfoService {
   getKarenderiaDisplayName(): string {
     const karenderia = this.getCurrentKarenderia();
     if (!karenderia) {
-      // Check if user is logged in
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        return 'KaPlato Kitchen'; // Default for non-logged-in users
+      const profile = this.userService.getCurrentUserProfile();
+      const currentUser = this.authService.getCurrentUser();
+
+      if (profile?.displayName) {
+        return profile.displayName;
       }
-      return 'Loading...'; // Loading state for logged-in users
+
+      if (currentUser?.name) {
+        return currentUser.name;
+      }
+
+      if (currentUser?.role === 'karenderia_owner') {
+        return 'Pending approval';
+      }
+
+      return 'KaPlato Kitchen';
     }
     return karenderia.business_name || karenderia.name || 'Your Karenderia';
   }
 
   getKarenderiaBrandInitials(): string {
     const name = this.getKarenderiaDisplayName();
-    if (name === 'Loading...') return '...';
+    if (name === 'Pending approval') return 'PA';
     if (name === 'KaPlato Kitchen') return 'KP';
     
     const words = name.split(' ').filter(word => word.length > 0);

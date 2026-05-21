@@ -3,8 +3,11 @@
     <div class="mobile-brand" role="button" tabindex="0" (click)="goTo('dashboard', $event)">
       <div class="brand-icon">{{ getKarenderiaBrandInitials() }}</div>
       <div class="brand-info">
-        <h3>{{ getKarenderiaDisplayName() }}</h3>
-        <span>{{ sectionLabel }}</span>
+          <h3>
+            {{ getKarenderiaDisplayName() }}
+            <span class="status-chip" *ngIf="ownerStatus && ownerStatus !== 'unknown'" [ngClass]="ownerStatus">{{ ownerStatus | titlecase }}</span>
+          </h3>
+          <span>{{ sectionLabel }}</span>
       </div>
     </div>
     <div class="mobile-actions">
@@ -22,8 +25,11 @@
       <div class="brand" role="button" tabindex="0" (click)="goTo('dashboard', $event)">
         <div class="brand-icon">{{ getKarenderiaBrandInitials() }}</div>
         <div class="brand-info">
-          <h3>{{ getKarenderiaDisplayName() }}</h3>
-          <span>{{ sectionLabel }}</span>
+            <h3>
+              {{ getKarenderiaDisplayName() }}
+              <span class="status-chip" *ngIf="ownerStatus && ownerStatus !== 'unknown'" [ngClass]="ownerStatus">{{ ownerStatus | titlecase }}</span>
+            </h3>
+            <span>{{ sectionLabel }}</span>
         </div>
       </div>
     </div>
