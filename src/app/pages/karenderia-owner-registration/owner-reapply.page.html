@@ -1,0 +1,124 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/login"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Reapply for Owner Account</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <div class="reapply-container">
+    <!-- Rejection Notice -->
+    <ion-card class="rejection-card">
+      <ion-card-header>
+        <ion-card-title class="ion-text-center">
+          <ion-icon name="alert-circle" class="rejection-icon"></ion-icon>
+          Application Status
+        </ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p class="ion-text-center" *ngIf="businessName">
+          <strong>Business:</strong> {{ businessName }}
+        </p>
+        <p class="ion-text-center" *ngIf="rejectionDate">
+          <strong>Rejection Date:</strong> {{ rejectionDate }}
+        </p>
+        <div class="rejection-reason" *ngIf="rejectionReason">
+          <p><strong>Reason for Rejection:</strong></p>
+          <p class="reason-text">{{ rejectionReason }}</p>
+        </div>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Reapply Form -->
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Submit Updated Documents</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p class="info-text">
+          You can reapply with an updated or corrected business permit. Please ensure your document is clear and valid.
+        </p>
+
+        <!-- File Upload -->
+        <div class="file-upload">
+          <label for="permitInput" class="upload-label">
+            <ion-icon name="cloud-upload"></ion-icon>
+            <span>Upload Business Permit</span>
+          </label>
+          <input
+            id="permitInput"
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png"
+            (change)="onFileSelected($event)"
+            class="file-input"
+          />
+          <p class="file-info" *ngIf="businessPermitFile">
+            ✓ {{ businessPermitFile.name }}
+          </p>
+          <p class="file-info">
+            Accepted: PDF, JPG, PNG (Max 5MB)
+          </p>
+        </div>
+
+        <!-- Requirements Checklist -->
+        <div class="requirements">
+          <h3>Before You Submit:</h3>
+          <ul>
+            <li>✓ Business permit is clear and readable</li>
+            <li>✓ Business permit is not expired</li>
+            <li>✓ All information matches your business permit</li>
+            <li>✓ File format is PDF, JPG, or PNG</li>
+            <li>✓ File size is less than 5MB</li>
+          </ul>
+        </div>
+
+        <!-- Email Display -->
+        <ion-item class="email-display">
+          <ion-label position="stacked">Registered Email</ion-label>
+          <p class="email-text">{{ email }}</p>
+        </ion-item>
+
+        <!-- Submit Button -->
+        <ion-button
+          expand="block"
+          color="primary"
+          (click)="onReapply()"
+          [disabled]="!businessPermitFile || isLoading"
+          class="ion-margin-top"
+        >
+          <ion-spinner *ngIf="isLoading" name="crescent"></ion-spinner>
+          <span *ngIf="!isLoading">Submit Reapplication</span>
+          <span *ngIf="isLoading">Submitting...</span>
+        </ion-button>
+
+        <!-- Back Button -->
+        <ion-button
+          expand="block"
+          fill="outline"
+          color="medium"
+          (click)="goBack()"
+          class="ion-margin-top"
+        >
+          Back to Login
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+
+    <!-- Help Section -->
+    <ion-card class="help-card">
+      <ion-card-header>
+        <ion-card-title>Need Help?</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p>
+          If you have questions about why your application was rejected or need assistance, please contact our support team at:
+        </p>
+        <p class="support-contact">
+          <strong>support&#64;kaplato.com</strong>
+        </p>
+      </ion-card-content>
+    </ion-card>
+  </div>
+</ion-content>

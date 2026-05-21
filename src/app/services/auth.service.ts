@@ -289,4 +289,22 @@ export class AuthService {
       headers: this.getAuthHeaders()
     });
   }
+
+  reapplyAsOwner(email: string, businessPermitFile: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('email', email);
+    formData.append('business_permit_file', businessPermitFile);
+
+    return this.http.post<any>(`${this.apiUrl}/auth/reapply-owner`, formData)
+      .pipe(
+        tap(response => {
+          // Clear any cached auth on reapply
+          this.logout();
+        }),
+        catchError(error => {
+          console.error('Owner reapplication error:', error);
+          throw error;
+        })
+      );
+  }
 }

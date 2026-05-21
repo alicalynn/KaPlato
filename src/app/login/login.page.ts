@@ -4,6 +4,7 @@ import { NgForm } from '@angular/forms';
 import { AuthService } from '../services/auth.service';
 import { KarenderiaInfoService } from '../services/karenderia-info.service';
 import { UserService } from '../services/user.service';
+import { AlertController } from '@ionic/angular';
 
 @Component({
   selector: 'app-login',
@@ -26,7 +27,8 @@ export class LoginPage implements OnInit {
     private authService: AuthService,
     private router: Router,
     private karenderiaInfoService: KarenderiaInfoService,
-    private userService: UserService
+    private userService: UserService,
+    private alertController: AlertController
   ) {}
 
   async ngOnInit() {
@@ -116,6 +118,21 @@ export class LoginPage implements OnInit {
         }
         
       } catch (error: any) {
+        // Handle rejection status specifically
+        if (error?.status === 403 && error?.error?.status === 'rejected') {
+          // Store rejection info for the reapply page
+          const rejectionInfo = {
+            rejection_reason: error.error.application_details?.rejection_reason || 'Your application was rejected',
+            business_name: error.error.application_details?.business_name || '',
+            rejected_at: error.error.application_details?.rejected_at || '',
+          };
+          sessionStorage.setItem('ownerRejectionInfo', JSON.stringify(rejectionInfo));
+
+          // Show alert with reapply option
+          this.showRejectionAlert(error.error, this.loginData.emailOrUsername);
+          return;
+        }
+
         if (error?.error?.message) {
           this.errorMessage = error.error.message;
         } else if (error?.message) {
@@ -136,5 +153,27 @@ export class LoginPage implements OnInit {
 
   goToRegister() {
     this.router.navigate(['/register']);
+  }
+
+  private async showRejectionAlert(errorResponse: any, email: string) {
+    const alert = await this.alertController.create({
+      header: '❌ Application Rejected',
+      message: `Your Karenderia application has been rejected.\n\nReason: ${errorResponse.application_details?.rejection_reason || 'Not specified'}\n\nYou can reapply with updated or corrected business documents.`,
+      buttons: [
+        {
+          text: 'Back',
+          role: 'cancel'
+        },
+        {
+          text: 'Reapply Now',
+          handler: () => {
+            this.router.navigate(['/owner-reapply'], { 
+              queryParams: { email: email } 
+            });
+          }
+        }
+      ]
+    });
+    await alert.present();
   }
 }
