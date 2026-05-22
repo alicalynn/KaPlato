@@ -11,6 +11,7 @@ import { environment } from '../environments/environment';
 import { QrScannerService } from './services/qr-scanner.service';
 import { ApiConfigService } from './services/api-config.service';
 import { QRScanner } from '@ionic-native/qr-scanner/ngx';
+import { ngrokBypassInterceptor } from './interceptors/ngrok-bypass.interceptor';
 
 @NgModule({
   declarations: [AppComponent],
@@ -21,7 +22,7 @@ import { QRScanner } from '@ionic-native/qr-scanner/ngx';
   ],
   providers: [
     { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    provideHttpClient(withFetch()),
+    provideHttpClient(withFetch(), withInterceptors([ngrokBypassInterceptor])),
     QrScannerService,
     ApiConfigService,
     QRScanner

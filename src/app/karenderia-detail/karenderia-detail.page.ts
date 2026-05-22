@@ -7,6 +7,7 @@ import { UserService } from '../services/user.service';
 import { Location } from '@angular/common';
 import { timeout, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { ViewportScroller } from '@angular/common';
 
 @Component({
   selector: 'app-karenderia-detail',
@@ -33,6 +34,7 @@ export class KarenderiaDetailPage implements OnInit {
   activeAllergens: string[] = [];
   avoidAllergenItems = true;
   allergenFilterMode: 'show-all' | 'avoid-allergens' = 'avoid-allergens';
+  private scrollToFeedbackSection = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -44,12 +46,15 @@ export class KarenderiaDetailPage implements OnInit {
     private toastController: ToastController,
     private alertController: AlertController,
     private navController: NavController,
-    private location: Location
+    private location: Location,
+    private viewportScroller: ViewportScroller
   ) {}
 
   ngOnInit() {
     this.karenderiaId = this.route.snapshot.paramMap.get('id') || '';
     console.log('🏪 Loading karenderia details for ID:', this.karenderiaId);
+
+    this.scrollToFeedbackSection = this.route.snapshot.fragment === 'feedback-reports';
     
     // Load user allergens first
     this.loadUserAllergens();
@@ -162,6 +167,7 @@ export class KarenderiaDetailPage implements OnInit {
               this.categories = ['all'];
             }
             this.isLoading = false;
+            this.scrollToRequestedSection();
           },
           error: (error) => {
             console.error('❌ Final error handler - displaying empty menu:', error);
@@ -169,6 +175,7 @@ export class KarenderiaDetailPage implements OnInit {
             this.filteredMenuItems = [];
             this.categories = ['all'];
             this.isLoading = false;
+            this.scrollToRequestedSection();
           }
         });
         
@@ -178,7 +185,18 @@ export class KarenderiaDetailPage implements OnInit {
       this.filteredMenuItems = [];
       this.categories = ['all'];
       this.isLoading = false;
+      this.scrollToRequestedSection();
     }
+  }
+
+  private scrollToRequestedSection() {
+    if (!this.scrollToFeedbackSection || this.isLoading || !this.karenderia) {
+      return;
+    }
+
+    setTimeout(() => {
+      this.viewportScroller.scrollToAnchor('feedback-reports-section');
+    }, 300);
   }
 
   // Helper method to map service categories to component categories

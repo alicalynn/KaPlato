@@ -189,6 +189,15 @@
             <ion-icon name="restaurant-outline" slot="start"></ion-icon>
             {{ karenderia.isOpen ? 'View Menu' : 'Closed' }}
           </ion-button>
+          <ion-button 
+            fill="outline" 
+            size="small" 
+            color="medium" 
+            class="view-menu-btn"
+            (click)="openFeedbackAndReport(karenderia); $event.stopPropagation()">
+            <ion-icon name="chatbubble-ellipses-outline" slot="start"></ion-icon>
+            Feedback / Report
+          </ion-button>
         </ion-card-content>
       </ion-card>
     </div>

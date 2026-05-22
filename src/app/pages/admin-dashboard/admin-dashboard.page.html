@@ -59,6 +59,10 @@
           <ion-icon name="restaurant"></ion-icon>
           <ion-label>Applications</ion-label>
         </ion-segment-button>
+        <ion-segment-button value="reports" class="modern-segment-btn">
+          <ion-icon name="warning"></ion-icon>
+          <ion-label>Reports</ion-label>
+        </ion-segment-button>
       </ion-segment>
     </div>
 
@@ -233,6 +237,36 @@
               </div>
               <div class="action-badge">
                 <ion-badge color="tertiary">{{dashboardStats?.total_owners || 0}}</ion-badge>
+              </div>
+            </div>
+          </ion-button>
+        </div>
+      </div>
+
+      <!-- Reports Quick Action -->
+      <div class="modern-actions-section">
+        <div class="section-header">
+          <ion-icon name="warning" color="danger"></ion-icon>
+          <h2>Reports</h2>
+          <p>Customer-submitted issues waiting for investigation</p>
+        </div>
+
+        <div class="modern-actions-grid">
+          <ion-button
+            expand="block"
+            fill="clear"
+            class="modern-action-button urgent"
+            (click)="selectedTab = 'reports'; loadReports()">
+            <div class="action-content">
+              <div class="action-icon">
+                <ion-icon name="warning" color="danger"></ion-icon>
+              </div>
+              <div class="action-text">
+                <div class="action-title">Open Reports</div>
+                <div class="action-subtitle">Customer complaints and safety issues</div>
+              </div>
+              <div class="action-badge">
+                <ion-badge color="danger">{{reports?.length || 0}}</ion-badge>
               </div>
             </div>
           </ion-button>
@@ -556,6 +590,88 @@
                   <ion-icon name="checkmark-circle"></ion-icon>
                   <ion-label>Application Approved</ion-label>
                 </ion-chip>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modern Reports Tab -->
+    <div *ngIf="selectedTab === 'reports'" class="modern-tab-content">
+      <div class="modern-applications-section">
+        <div class="section-header">
+          <ion-icon name="warning" color="danger"></ion-icon>
+          <h2>Customer Reports</h2>
+          <p>Issues submitted by customers for review and investigation</p>
+          <ion-button
+            fill="solid"
+            size="small"
+            color="danger"
+            (click)="loadReports()"
+            class="refresh-btn">
+            <ion-icon name="refresh" slot="start"></ion-icon>
+            Refresh Data
+          </ion-button>
+        </div>
+
+        <div *ngIf="!reports || reports.length === 0" class="modern-empty-state">
+          <div class="empty-icon">
+            <ion-icon name="checkmark-circle" color="success"></ion-icon>
+          </div>
+          <h3>No open reports</h3>
+          <p>Customer reports will appear here when submitted</p>
+        </div>
+
+        <div class="modern-applications-grid">
+          <ion-card *ngFor="let report of reports" class="modern-application-card">
+            <ion-card-content>
+              <div class="application-card-header">
+                <div class="business-identity">
+                  <div class="business-avatar">
+                    <ion-icon name="warning" color="danger"></ion-icon>
+                  </div>
+                  <div class="business-info">
+                    <h3>{{ report.karenderia?.business_name || report.karenderia?.name || ('Karenderia #' + report.karenderia_id) }}</h3>
+                    <p>{{ report.reporter?.name || 'Anonymous' }} • {{ report.reporter?.email || 'No email' }}</p>
+                  </div>
+                </div>
+                <ion-chip [color]="report.status === 'resolved' ? 'success' : report.status === 'under_review' ? 'warning' : 'danger'" class="application-status-chip">
+                  <ion-icon [name]="report.status === 'resolved' ? 'checkmark-circle' : report.status === 'under_review' ? 'time' : 'alert-circle'"></ion-icon>
+                  <ion-label>{{ report.status }}</ion-label>
+                </ion-chip>
+              </div>
+
+              <div class="application-details-grid">
+                <div class="detail-item">
+                  <ion-icon name="pricetag" color="primary"></ion-icon>
+                  <span>{{ report.report_type }}</span>
+                </div>
+                <div class="detail-item">
+                  <ion-icon name="people" color="tertiary"></ion-icon>
+                  <span>Similar reports: {{ report.similar_reports_count || 0 }}</span>
+                </div>
+                <div class="detail-item">
+                  <ion-icon name="calendar" color="warning"></ion-icon>
+                  <span>Submitted: {{ report.created_at | date:'medium' }}</span>
+                </div>
+              </div>
+
+              <div class="report-description">
+                <h4>Description</h4>
+                <p>{{ report.description }}</p>
+              </div>
+
+              <div class="report-description" *ngIf="report.evidence">
+                <h4>Evidence</h4>
+                <p>{{ report.evidence }}</p>
+              </div>
+
+              <div class="user-actions-grid">
+                <ion-button size="small" fill="outline" color="medium" disabled>
+                  <ion-icon name="eye" slot="start"></ion-icon>
+                  Review Only
+                </ion-button>
               </div>
             </ion-card-content>
           </ion-card>

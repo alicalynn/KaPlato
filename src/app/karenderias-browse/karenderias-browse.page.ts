@@ -349,6 +349,20 @@ export class KarenderiasBrowsePage implements OnInit {
     }
   }
 
+  async openFeedbackAndReport(karenderia: any) {
+    console.log('📝 Opening feedback/report section for karenderia:', karenderia.name);
+
+    try {
+      await this.router.navigate(['/karenderia-detail', karenderia.id], {
+        state: { karenderia },
+        fragment: 'feedback-reports'
+      });
+    } catch (error) {
+      console.error('❌ Error navigating to feedback/report section:', error);
+      await this.showToast('Unable to open feedback and reports at this time');
+    }
+  }
+
   goBack() {
     this.router.navigate(['/home']);
   }

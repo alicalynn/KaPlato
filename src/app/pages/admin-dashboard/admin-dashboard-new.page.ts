@@ -16,7 +16,8 @@ import {
   serverOutline, cloudOutline, storefrontOutline, peopleOutline,
   businessOutline, refreshOutline, callOutline, calendarOutline,
   mailOutline, banOutline, swapHorizontalOutline, trashOutline,
-  checkmarkOutline, mapOutline, people, business
+  checkmarkOutline, mapOutline, people, business, warningOutline,
+  alertCircleOutline, pricetagOutline
 } from 'ionicons/icons';
 
 import { AuthService, User } from '../../services/auth.service';
@@ -45,6 +46,7 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
   recentApplications: any[] = [];
   customers: any[] = [];
   karenderiaOwners: any[] = [];
+  reports: any[] = [];
   
   private timeInterval: any;
 
@@ -90,7 +92,10 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
       checkmarkOutline,
       mapOutline,
       people,
-      business
+      business,
+      warningOutline,
+      alertCircleOutline,
+      pricetagOutline
     });
   }
 
@@ -127,6 +132,9 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
         break;
       case 'karenderias':
         this.loadRecentApplications();
+        break;
+      case 'reports':
+        this.loadReports();
         break;
     }
   }
@@ -175,6 +183,18 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error loading karenderia owners:', error);
         this.showToast('Error loading owners', 'danger');
+      }
+    });
+  }
+
+  loadReports() {
+    this.adminService.getReports().subscribe({
+      next: (response) => {
+        this.reports = response.data?.data || response.data || [];
+      },
+      error: (error) => {
+        console.error('Error loading reports:', error);
+        this.showToast('Error loading reports', 'danger');
       }
     });
   }

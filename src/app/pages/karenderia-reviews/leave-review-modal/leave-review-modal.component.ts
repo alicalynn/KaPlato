@@ -21,13 +21,6 @@ export class LeaveReviewModalComponent implements OnInit {
   selectedDelivery = 0;
   isSaving = false;
 
-  karenderiaStatuses = [
-    { value: 'open', label: 'Open' },
-    { value: 'closed_temporary', label: 'Temporarily Closed' },
-    { value: 'closed_permanent', label: 'Permanently Closed' },
-    { value: 'unknown', label: 'Unknown Status' }
-  ];
-
   tagSuggestions = [
     'Good food quality', 'Poor service', 'Great variety', 'Hygiene concerns',
     'Quick delivery', 'Slow service', 'Fair pricing', 'Expensive',
@@ -45,7 +38,6 @@ export class LeaveReviewModalComponent implements OnInit {
   ) {
     this.form = this.fb.group({
       rating: [0, Validators.required],
-      karenderia_status: ['open', Validators.required],
       comment: ['', [Validators.maxLength(2000)]],
       food_feedback: ['', [Validators.maxLength(1000)]],
       food_quality_rating: [0],

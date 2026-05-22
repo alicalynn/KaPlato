@@ -116,8 +116,9 @@ export class KarenderiaReviewsComponent implements OnInit {
         karenderiaName: this.karenderiaName
       },
       cssClass: 'review-modal',
-      breakpoints: [0, 0.5, 1],
-      initialBreakpoint: 0.9
+      breakpoints: [0, 1],
+      initialBreakpoint: 1,
+      handle: false
     });
 
     await modal.present();
@@ -142,8 +143,9 @@ export class KarenderiaReviewsComponent implements OnInit {
         karenderiaName: this.karenderiaName
       },
       cssClass: 'report-modal',
-      breakpoints: [0, 0.5, 1],
-      initialBreakpoint: 0.9
+      breakpoints: [0, 1],
+      initialBreakpoint: 1,
+      handle: false
     });
 
     await modal.present();

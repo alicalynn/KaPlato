@@ -38,22 +38,6 @@
       </ion-card-content>
     </ion-card>
 
-    <!-- Karenderia Status -->
-    <ion-card>
-      <ion-card-header>
-        <ion-card-title>Karenderia Status</ion-card-title>
-      </ion-card-header>
-      <ion-card-content>
-        <p class="section-description">What status was the karenderia?</p>
-        <ion-select formControlName="karenderia_status" placeholder="Select status">
-          <ion-select-option *ngFor="let status of karenderiaStatuses" 
-            [value]="status.value">
-            {{ status.label }}
-          </ion-select-option>
-        </ion-select>
-      </ion-card-content>
-    </ion-card>
-
     <!-- Optional Ratings -->
     <ion-card>
       <ion-card-header>

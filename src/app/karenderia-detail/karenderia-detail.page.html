@@ -221,7 +221,7 @@
   </div>
 
   <!-- Karenderia Reviews Section -->
-  <div *ngIf="!isLoading && karenderia" class="reviews-section">
+  <div *ngIf="!isLoading && karenderia" id="feedback-reports-section" class="reviews-section">
     <app-karenderia-reviews 
       [karenderiaId]="+karenderiaId" 
       [karenderiaName]="karenderia.name">

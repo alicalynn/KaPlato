@@ -31,6 +31,35 @@ export interface KarenderiaResponse {
   updated_at: string;
 }
 
+export interface AdminReportResponse {
+  id: number;
+  karenderia_id: number;
+  reporter_id: number;
+  reporter_type: string;
+  report_type: string;
+  description: string;
+  evidence?: string | null;
+  attachments?: string[] | null;
+  status: 'new' | 'under_review' | 'acknowledged' | 'resolved' | 'rejected';
+  admin_response?: string | null;
+  assigned_admin_id?: number | null;
+  resolved_at?: string | null;
+  verified: boolean;
+  similar_reports_count: number;
+  created_at: string;
+  updated_at: string;
+  karenderia?: {
+    id: number;
+    business_name: string;
+    name?: string;
+  };
+  reporter?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -99,6 +128,13 @@ export class AdminService {
   // Get admin dashboard stats
   getDashboardStats(): Observable<any> {
     return this.http.get(`${this.apiUrl}/admin/dashboard/stats`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  // Get unresolved karenderia reports for admin review
+  getReports(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/admin/reports`, {
       headers: this.getAuthHeaders()
     });
   }

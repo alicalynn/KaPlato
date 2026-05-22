@@ -291,6 +291,25 @@ export class HomePage implements OnInit, OnDestroy {
     }
   }
 
+  async openFeedbackAndReport(karenderia: any) {
+    console.log('📝 Opening feedback/report section for karenderia:', karenderia.name);
+
+    if (!karenderia.id) {
+      await this.showToast('Unable to open feedback and reports right now');
+      return;
+    }
+
+    try {
+      await this.router.navigate(['/karenderia-detail', karenderia.id], {
+        state: { karenderia },
+        fragment: 'feedback-reports'
+      });
+    } catch (error) {
+      console.error('❌ Error navigating to feedback/report section:', error);
+      await this.showToast('Unable to open feedback and reports at this time');
+    }
+  }
+
   async browseKarenderiaMenus() {
     console.log('🍽️ Browse Karenderia Menus clicked');
     

@@ -1,5 +1,14 @@
 .leave-review-content {
   --background: var(--ion-background-color);
+  --overflow: auto;
+
+  &::part(scroll) {
+    padding-bottom: 24px;
+  }
+
+  ion-content {
+    --overflow: auto;
+  }
 
   .karenderia-header {
     padding: 20px;
@@ -21,6 +30,7 @@
 
   form {
     padding: 20px;
+    padding-bottom: 40px;
 
     ion-card {
       margin: 0 0 16px;
