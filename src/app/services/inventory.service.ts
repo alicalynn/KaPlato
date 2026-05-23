@@ -104,6 +104,8 @@ export interface SupplyOrder {
   karenderia_id: number;
   supplier_id: number;
   status: 'pending' | 'confirmed' | 'delivering' | 'delivered' | 'cancelled';
+  payment_status?: 'pending' | 'confirmed' | 'failed';
+  payment_method?: 'cod' | 'paymaya_sandbox' | 'paypal_sandbox';
   total_amount: number;
   notes?: string;
   delivery_date?: string;
@@ -127,7 +129,7 @@ export interface CreateSupplyOrderData {
     supplier_inventory_item_id: number;
     quantity: number;
   }>;
-  payment_method?: 'cod' | 'paymaya';
+  payment_method?: 'cod' | 'paymaya_sandbox' | 'paypal_sandbox';
   notes?: string;
   delivery_date?: string;
 }

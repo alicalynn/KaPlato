@@ -64,7 +64,7 @@ export class InventoryManagementPage implements OnInit {
   showSupplyOrderForm = false;
   supplyNotes = '';
   supplyDeliveryDate = '';
-  selectedSupplyPaymentMethod: 'cod' | 'paymaya' = 'cod';
+  selectedSupplyPaymentMethod: 'cod' | 'paymaya_sandbox' | 'paypal_sandbox' = 'cod';
 
   supplierUiPages: SupplierUiPage[] = [
     { page: 'Supplier Listings', purpose: 'Manage inventory listings, pricing, and stock', status: 'In Progress' },
@@ -396,6 +396,18 @@ export class InventoryManagementPage implements OnInit {
     }
   }
 
+  getPaymentMethodLabel(paymentMethod?: string): string {
+    switch (paymentMethod) {
+      case 'paymaya_sandbox':
+        return 'PayMaya (Sandbox)';
+      case 'paypal_sandbox':
+        return 'PayPal (Sandbox)';
+      case 'cod':
+      default:
+        return 'Cash on Delivery (COD)';
+    }
+  }
+
   getSupplierListingStockColor(listing: SupplierListing): string {
     if (listing.available_stock <= 0) {
       return 'danger';
@@ -608,22 +620,6 @@ export class InventoryManagementPage implements OnInit {
   }
 
   async messageOrderOwner(order: SupplyOrder) {
-    // Ensure conversation exists for this order
-    const conversation = this.messagingService.getConversationSync(order.id);
-    if (!conversation) {
-      // Initialize conversation if it doesn't exist
-      const initMessage: any = {
-        orderId: order.id,
-        supplierId: order.supplier_id,
-        karenderiaId: order.karenderia_id,
-        senderId: 0,
-        senderRole: 'supplier',
-        content: 'Conversation started',
-        timestamp: new Date(),
-        isRead: true
-      };
-    }
-
     const modal = await this.modalController.create({
       component: SupplyOrderMessagingPage,
       componentProps: {
@@ -641,22 +637,6 @@ export class InventoryManagementPage implements OnInit {
   }
 
   async messageSupplier(order: SupplyOrder) {
-    // Ensure conversation exists for this order
-    const conversation = this.messagingService.getConversationSync(order.id);
-    if (!conversation) {
-      // Initialize conversation if it doesn't exist
-      const initMessage: any = {
-        orderId: order.id,
-        supplierId: order.supplier_id,
-        karenderiaId: order.karenderia_id,
-        senderId: 0,
-        senderRole: 'karenderia_owner',
-        content: 'Conversation started',
-        timestamp: new Date(),
-        isRead: true
-      };
-    }
-
     const modal = await this.modalController.create({
       component: SupplyOrderMessagingPage,
       componentProps: {

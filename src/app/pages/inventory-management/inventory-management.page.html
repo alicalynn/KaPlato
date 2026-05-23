@@ -327,7 +327,8 @@
             <ion-label position="stacked">Mode of Payment</ion-label>
             <ion-select [(ngModel)]="selectedSupplyPaymentMethod" interface="popover" placeholder="Choose mode of payment">
               <ion-select-option value="cod">Cash on Delivery (COD)</ion-select-option>
-              <ion-select-option value="paymaya">PayMaya (Sandbox)</ion-select-option>
+              <ion-select-option value="paymaya_sandbox">PayMaya (Sandbox)</ion-select-option>
+              <ion-select-option value="paypal_sandbox">PayPal (Sandbox)</ion-select-option>
             </ion-select>
           </ion-item>
 
@@ -428,6 +429,7 @@
       <ion-card-content>
         <p><strong>Items:</strong> {{ formatOrderItems(order) }}</p>
         <p><strong>Total:</strong> ₱{{ order.total_amount | number:'1.2-2' }}</p>
+        <p><strong>Payment:</strong> {{ getPaymentMethodLabel(order.payment_method) }}</p>
         <p *ngIf="order.notes"><strong>Notes:</strong> {{ order.notes }}</p>
         <div class="card-actions">
           <ion-button
@@ -623,6 +625,7 @@
       <ion-card-content>
         <p><strong>Items:</strong> {{ formatOrderItems(order) }}</p>
         <p><strong>Total:</strong> ₱{{ order.total_amount | number:'1.2-2' }}</p>
+        <p><strong>Payment:</strong> {{ getPaymentMethodLabel(order.payment_method) }}</p>
         <p><strong>Date:</strong> {{ order.created_at | date:'mediumDate' }}</p>
         <div class="card-actions">
           <ion-button

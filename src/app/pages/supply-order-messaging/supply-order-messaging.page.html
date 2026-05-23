@@ -27,26 +27,31 @@
          [class.received]="!isSentByCurrentUser(message)">
       <div class="message-bubble">
         <div class="message-sender" *ngIf="!isSentByCurrentUser(message)">
-          {{ message.senderName || message.senderRole | titlecase }}
+          {{ message.fromUser?.name || 'User' }}
         </div>
-        <div class="message-text">{{ message.content }}</div>
-        <div class="message-time">{{ message.timestamp | date:'short' }}</div>
+        <div class="message-text">{{ message.message }}</div>
+        <div class="message-time">{{ message.created_at | date:'short' }}</div>
       </div>
     </div>
   </div>
-</ion-content>
 
-<ion-footer>
-  <div class="message-input-container">
-    <ion-item lines="none">
-      <ion-input
-        [(ngModel)]="newMessage"
-        placeholder="Type a message..."
-        (keyup.enter)="sendMessage()">
-      </ion-input>
-      <ion-button slot="end" fill="clear" (click)="sendMessage()" [disabled]="!newMessage || !newMessage.trim()">
-        <ion-icon name="send" size="large"></ion-icon>
-      </ion-button>
-    </ion-item>
+  <div class="message-input-area">
+    <input
+      type="text"
+      placeholder="Type a message..."
+      [(ngModel)]="newMessage"
+      (keyup.enter)="sendMessage()"
+      [disabled]="isSendingMessage"
+      class="message-input"
+    >
+    <button
+      (click)="sendMessage()"
+      [disabled]="!newMessage.trim() || isSendingMessage"
+      class="send-btn"
+      type="button"
+    >
+      <ion-icon *ngIf="!isSendingMessage" name="send-outline"></ion-icon>
+      <ion-spinner *ngIf="isSendingMessage" name="dots"></ion-spinner>
+    </button>
   </div>
-</ion-footer>
+</ion-content>
