@@ -127,6 +127,7 @@ export interface CreateSupplyOrderData {
     supplier_inventory_item_id: number;
     quantity: number;
   }>;
+  payment_method?: 'cod' | 'paymaya';
   notes?: string;
   delivery_date?: string;
 }

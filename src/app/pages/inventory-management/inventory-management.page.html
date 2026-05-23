@@ -316,9 +316,40 @@
           </div>
         </div>
         <div class="cart-total">Total: ₱{{ getCartTotal() | number:'1.2-2' }}</div>
-        <div class="cart-buttons">
+
+        <div class="submit-order-box" *ngIf="showSupplyOrderForm">
+          <div class="submit-order-header">
+            <div class="submit-order-title">Submit Supply Order</div>
+            <div class="submit-order-total">Total: ₱{{ getCartTotal() | number:'1.2-2' }}</div>
+          </div>
+
+          <ion-item lines="full" class="form-row">
+            <ion-label position="stacked">Mode of Payment</ion-label>
+            <ion-select [(ngModel)]="selectedSupplyPaymentMethod" interface="popover" placeholder="Choose mode of payment">
+              <ion-select-option value="cod">Cash on Delivery (COD)</ion-select-option>
+              <ion-select-option value="paymaya">PayMaya (Sandbox)</ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item lines="full" class="form-row">
+            <ion-label position="stacked">Delivery Date</ion-label>
+            <ion-input type="date" [(ngModel)]="supplyDeliveryDate" placeholder="mm/dd/yyyy"></ion-input>
+          </ion-item>
+
+          <ion-item lines="full" class="form-row">
+            <ion-label position="stacked">Notes for supplier (optional)</ion-label>
+            <ion-textarea [(ngModel)]="supplyNotes" placeholder="Add any instructions here"></ion-textarea>
+          </ion-item>
+
+          <div class="submit-actions">
+            <ion-button fill="outline" color="medium" (click)="closeSupplyOrderForm()">Cancel</ion-button>
+            <ion-button fill="solid" color="success" (click)="confirmSupplyOrder()">Submit Order</ion-button>
+          </div>
+        </div>
+
+        <div class="cart-buttons" *ngIf="!showSupplyOrderForm">
           <ion-button fill="outline" color="medium" (click)="clearCart()">Clear</ion-button>
-          <ion-button fill="solid" color="success" (click)="submitSupplyOrder()">Submit Order</ion-button>
+          <ion-button fill="solid" color="success" (click)="submitSupplyOrder()">Choose MOP</ion-button>
         </div>
       </ion-card-content>
     </ion-card>

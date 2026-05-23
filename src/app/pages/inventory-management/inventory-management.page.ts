@@ -61,6 +61,10 @@ export class InventoryManagementPage implements OnInit {
   marketplaceSukiOnly = false;
   sukiSuppliers: SukiSupplier[] = [];
   isSeedingSupplierSamples = false;
+  showSupplyOrderForm = false;
+  supplyNotes = '';
+  supplyDeliveryDate = '';
+  selectedSupplyPaymentMethod: 'cod' | 'paymaya' = 'cod';
 
   supplierUiPages: SupplierUiPage[] = [
     { page: 'Supplier Listings', purpose: 'Manage inventory listings, pricing, and stock', status: 'In Progress' },
@@ -464,67 +468,63 @@ export class InventoryManagementPage implements OnInit {
     this.cart = [];
   }
 
-  getCartTotal(): number {
-    return this.cart.reduce((sum, item) => sum + (item.quantity * Number(item.listing.price_per_unit)), 0);
-  }
-
-  async submitSupplyOrder() {
+  openSupplyOrderForm() {
     if (!this.cart.length) {
       this.showToast('Your supply cart is empty', 'warning');
       return;
     }
 
-    const alert = await this.alertController.create({
-      header: 'Submit Supply Order',
-      message: `Total: ₱${this.getCartTotal().toFixed(2)}`,
-      inputs: [
-        {
-          name: 'notes',
-          type: 'textarea',
-          placeholder: 'Notes for supplier (optional)'
-        },
-        {
-          name: 'delivery_date',
-          type: 'date',
-          placeholder: 'Preferred delivery date (optional)'
-        }
-      ],
-      buttons: [
-        { text: 'Cancel', role: 'cancel' },
-        {
-          text: 'Submit Order',
-          handler: async (data) => {
-            const loading = await this.loadingController.create({
-              message: 'Submitting order...'
-            });
-            await loading.present();
+    this.showSupplyOrderForm = true;
+  }
 
-            try {
-              await this.inventoryService.createSupplyOrder({
-                items: this.cart.map(item => ({
-                  supplier_inventory_item_id: item.listing.id,
-                  quantity: item.quantity,
-                })),
-                notes: data?.notes || undefined,
-                delivery_date: data?.delivery_date || undefined,
-              }).toPromise();
+  closeSupplyOrderForm() {
+    this.showSupplyOrderForm = false;
+  }
 
-              this.showToast('Supply order submitted successfully', 'success');
-              this.clearCart();
-              this.loadOwnerOrders();
-              this.loadMarketplaceListings();
-            } catch (error: any) {
-              console.error('Error submitting supply order:', error);
-              this.showToast(error?.error?.error || 'Failed to submit order', 'danger');
-            } finally {
-              loading.dismiss();
-            }
-          }
-        }
-      ]
+  getCartTotal(): number {
+    return this.cart.reduce((sum, item) => sum + (item.quantity * Number(item.listing.price_per_unit)), 0);
+  }
+
+  async submitSupplyOrder() {
+    this.openSupplyOrderForm();
+  }
+
+  async confirmSupplyOrder() {
+    if (!this.cart.length) {
+      this.showToast('Your supply cart is empty', 'warning');
+      return;
+    }
+
+    const loading = await this.loadingController.create({
+      message: 'Submitting order...'
     });
+    await loading.present();
 
-    await alert.present();
+    try {
+      await this.inventoryService.createSupplyOrder({
+        items: this.cart.map(item => ({
+          supplier_inventory_item_id: item.listing.id,
+          quantity: item.quantity,
+        })),
+        payment_method: this.selectedSupplyPaymentMethod,
+        notes: this.supplyNotes || undefined,
+        delivery_date: this.supplyDeliveryDate || undefined,
+      }).toPromise();
+
+      this.showToast('Supply order submitted successfully', 'success');
+      this.clearCart();
+      this.showSupplyOrderForm = false;
+      this.supplyNotes = '';
+      this.supplyDeliveryDate = '';
+      this.selectedSupplyPaymentMethod = 'cod';
+      this.loadOwnerOrders();
+      this.loadMarketplaceListings();
+    } catch (error: any) {
+      console.error('Error submitting supply order:', error);
+      this.showToast(error?.error?.error || 'Failed to submit order', 'danger');
+    } finally {
+      loading.dismiss();
+    }
   }
 
   async cancelOwnerOrder(order: SupplyOrder) {
