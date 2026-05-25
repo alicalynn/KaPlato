@@ -6,7 +6,9 @@ import { NutritionAllergenService } from '../../services/nutrition-allergen.serv
 import { InventoryManagementService } from '../../services/inventory-management.service';
 import { AdvancedAnalyticsService } from '../../services/advanced-analytics.service';
 import { POSService } from '../../services/pos.service';
+import { KarenderiaReviewService } from '../../services/karenderia-review.service';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { 
   IonHeader, 
   IonToolbar, 
@@ -129,6 +131,7 @@ interface Karenderia {
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     IonHeader,
     IonToolbar,
     IonTitle,
@@ -176,6 +179,18 @@ export class KarenderiaDashboardPage implements OnInit, AfterViewInit {
   salesAnalytics: any = null;
   nutritionInsights: any = null;
   isLoadingDashboard = true;
+  
+  // Reviews Data
+  reviews: any[] = [];
+  filteredReviews: any[] = [];
+  isLoadingReviews = false;
+  averageRating = 0;
+  totalReviews = 0;
+  approvedReviews = 0;
+  pendingReviews = 0;
+  selectedRatingFilter = '';
+  reviewSortBy = 'newest';
+  Math = Math;
 
   constructor(
     private loadingController: LoadingController,
@@ -187,12 +202,14 @@ export class KarenderiaDashboardPage implements OnInit, AfterViewInit {
     private nutritionAllergenService: NutritionAllergenService,
     private inventoryService: InventoryManagementService,
     private analyticsService: AdvancedAnalyticsService,
-    private posService: POSService
+    private posService: POSService,
+    private reviewService: KarenderiaReviewService
   ) { }
 
   ngOnInit() {
     this.loadKarenderiaStatus();
     this.loadDashboardData();
+    this.loadReviews();
   }
 
   ngAfterViewInit() {
@@ -512,5 +529,64 @@ export class KarenderiaDashboardPage implements OnInit, AfterViewInit {
       position: 'top'
     });
     await toast.present();
+  }
+
+  // Review Management Methods
+  async loadReviews() {
+    if (!this.karenderia) return;
+    
+    this.isLoadingReviews = true;
+    try {
+      const response: any = await this.reviewService.getReviews(this.karenderia.id).toPromise();
+      
+      if (response?.data) {
+        this.reviews = response.data.reviews?.data || [];
+        const stats = response.data.stats;
+        
+        this.averageRating = stats?.average || 0;
+        this.totalReviews = stats?.total_reviews || 0;
+        this.approvedReviews = stats?.approved_reviews || 0;
+        this.pendingReviews = stats?.pending_reviews || 0;
+        
+        this.filterReviews();
+      }
+    } catch (error) {
+      console.error('Error loading reviews:', error);
+    } finally {
+      this.isLoadingReviews = false;
+    }
+  }
+
+  filterReviews() {
+    let filtered = [...this.reviews];
+    
+    // Filter by rating
+    if (this.selectedRatingFilter) {
+      const rating = parseInt(this.selectedRatingFilter);
+      filtered = filtered.filter(r => r.rating === rating);
+    }
+    
+    // Sort
+    switch (this.reviewSortBy) {
+      case 'newest':
+        filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        break;
+      case 'oldest':
+        filtered.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        break;
+      case 'highest':
+        filtered.sort((a, b) => b.rating - a.rating);
+        break;
+      case 'lowest':
+        filtered.sort((a, b) => a.rating - b.rating);
+        break;
+    }
+    
+    this.filteredReviews = filtered;
+  }
+
+  async viewAllReviews() {
+    // Navigate to reviews management page (if available) or open detailed modal
+    this.router.navigate(['/karenderia-reviews-management']);
   }
 }

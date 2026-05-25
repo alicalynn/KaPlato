@@ -1,0 +1,258 @@
+.payment-modal-content {
+  --padding-top: 16px;
+  --padding-bottom: 80px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  background: #f5f5f5;
+}
+
+.order-summary {
+  margin-bottom: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+  ion-card-header {
+    padding-bottom: 12px;
+  }
+
+  ion-card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  ion-card-content {
+    padding-top: 0;
+  }
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  span {
+    color: #666;
+    font-size: 14px;
+  }
+
+  strong {
+    color: #333;
+    font-weight: 600;
+
+    &.amount {
+      color: #ff5722;
+      font-size: 16px;
+    }
+  }
+}
+
+.payment-methods {
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin: 16px 0 12px 0;
+  }
+}
+
+.payment-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: #ff5722;
+    background: #fff5f2;
+  }
+
+  &.selected {
+    border-color: #ff5722;
+    background: #fff5f2;
+
+    ion-icon[name="checkmark-circle"] {
+      color: #ff5722;
+    }
+  }
+
+  .option-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: #f0f0f0;
+    border-radius: 8px;
+    flex-shrink: 0;
+
+    ion-icon {
+      font-size: 24px;
+      color: #666;
+    }
+  }
+
+  .option-content {
+    flex: 1;
+
+    h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      margin: 0 0 4px 0;
+    }
+
+    p {
+      font-size: 12px;
+      color: #999;
+      margin: 0;
+    }
+  }
+
+  ion-icon[name="checkmark-circle"] {
+    font-size: 24px;
+    color: #ccc;
+    flex-shrink: 0;
+  }
+}
+
+.payment-form-section {
+  margin-top: 20px;
+
+  ion-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+    ion-card-header {
+      padding-bottom: 12px;
+    }
+
+    ion-card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    ion-card-content {
+      padding-top: 0;
+
+      p {
+        font-size: 14px;
+        color: #666;
+        line-height: 1.6;
+        margin: 8px 0;
+
+        &.info-text {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: #999;
+          font-size: 13px;
+          margin: 12px 0;
+          padding: 8px;
+          background: #f5f5f5;
+          border-radius: 6px;
+
+          ion-icon {
+            font-size: 16px;
+            color: #ff5722;
+            flex-shrink: 0;
+          }
+        }
+      }
+    }
+  }
+}
+
+.form-item {
+  --padding-start: 0;
+  --padding-end: 0;
+  margin-bottom: 16px;
+
+  ion-label {
+    font-size: 14px;
+    color: #666;
+  }
+
+  ion-input {
+    --padding-start: 0;
+    --padding-end: 0;
+    font-size: 14px;
+  }
+}
+
+.card-details-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  .form-item {
+    margin-bottom: 0;
+  }
+}
+
+.test-cards {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 16px;
+
+  .test-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 8px 0;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      font-size: 12px;
+      color: #666;
+      padding: 4px 0;
+      font-family: 'Courier New', monospace;
+
+      strong {
+        color: #333;
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+ion-footer {
+  ion-toolbar {
+    --background: white;
+    border-top: 1px solid #f0f0f0;
+  }
+
+  ion-button {
+    --padding-start: 16px;
+    --padding-end: 16px;
+
+    &[disabled] {
+      opacity: 0.6;
+    }
+  }
+
+  ion-spinner {
+    margin-right: 8px;
+  }
+}

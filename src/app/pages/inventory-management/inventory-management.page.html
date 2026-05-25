@@ -438,6 +438,9 @@
             (click)="messageSupplier(order)">
             <ion-icon name="chatbubbles-outline" slot="start"></ion-icon>
             Message
+            <ion-badge *ngIf="getUnreadMessageCount(order.id) > 0" color="danger">
+              {{ getUnreadMessageCount(order.id) }}
+            </ion-badge>
           </ion-button>
           <ion-button
             fill="outline"
@@ -647,7 +650,8 @@
           <ion-button
             fill="outline"
             color="success"
-            [disabled]="order.status !== 'delivering'"
+            [disabled]="order.status !== 'delivering' || !order.owner_confirmed_delivery"
+            [title]="order.status === 'delivering' && !order.owner_confirmed_delivery ? 'Waiting for owner to confirm delivery' : ''"
             (click)="updateSupplierOrderStatus(order, 'delivered')">
             <ion-icon name="cube-outline" slot="start"></ion-icon>
             Mark Delivered
@@ -658,6 +662,9 @@
             (click)="messageOrderOwner(order)">
             <ion-icon name="chatbubbles-outline" slot="start"></ion-icon>
             Message
+            <ion-badge *ngIf="getUnreadMessageCount(order.id) > 0" color="danger">
+              {{ getUnreadMessageCount(order.id) }}
+            </ion-badge>
           </ion-button>
           <ion-button
             fill="outline"

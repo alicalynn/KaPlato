@@ -21,6 +21,7 @@ export class SupplyOrderMessagingPage implements OnInit, AfterViewChecked, OnDes
   @Input() supplierId: number = 0;
   @Input() karenderiaId: number = 0;
   @Input() otherPartyName: string = 'Other Party';
+  @Input() onDismiss?: () => void;  // Callback to refresh parent's unread count
   @ViewChild('messageContainer') private messageContainer!: ElementRef;
 
   messages: SupplyOrderMessage[] = [];
@@ -53,6 +54,10 @@ export class SupplyOrderMessagingPage implements OnInit, AfterViewChecked, OnDes
 
   ngOnDestroy() {
     this.pollSubscription?.unsubscribe();
+    // Notify parent to clear unread badge when modal closes
+    if (this.onDismiss) {
+      this.onDismiss();
+    }
   }
 
   ngAfterViewChecked() {
@@ -70,16 +75,18 @@ export class SupplyOrderMessagingPage implements OnInit, AfterViewChecked, OnDes
   }
 
   private startRealtimePolling() {
-    this.pollSubscription = interval(2500)
+    this.pollSubscription = interval(3000)
       .pipe(
         startWith(0),
         switchMap(() => this.messagingService.getMessages(this.orderId))
       )
       .subscribe({
         next: (messages) => {
-          this.messages = messages;
           const newestId = messages.length ? messages[messages.length - 1].id : 0;
-          if (newestId !== this.lastMessageId) {
+          
+          // Only update messages if there are new messages or count changed
+          if (newestId !== this.lastMessageId || this.messages.length !== messages.length) {
+            this.messages = messages;
             this.lastMessageId = newestId;
             this.shouldScroll = true;
           }
@@ -162,6 +169,10 @@ export class SupplyOrderMessagingPage implements OnInit, AfterViewChecked, OnDes
   }
 
   dismissModal() {
+    // Call the callback before dismissing to refresh parent's badge
+    if (this.onDismiss) {
+      this.onDismiss();
+    }
     this.modalController.dismiss();
   }
 

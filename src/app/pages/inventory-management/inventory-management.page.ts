@@ -15,6 +15,7 @@ import {
 import { AuthService } from '../../services/auth.service';
 import { SupplyOrderMessagingService } from '../../services/supply-order-messaging.service';
 import { SupplyOrderMessagingPage } from '../supply-order-messaging/supply-order-messaging.page';
+import { SupplyOrderPaymentModalPage } from '../supply-order-payment-modal/supply-order-payment-modal.page';
 import { OwnerShellComponent } from '../../components/owner-shell/owner-shell.component';
 
 interface CartItem {
@@ -65,6 +66,9 @@ export class InventoryManagementPage implements OnInit {
   supplyNotes = '';
   supplyDeliveryDate = '';
   selectedSupplyPaymentMethod: 'cod' | 'paymaya_sandbox' | 'paypal_sandbox' = 'cod';
+
+  // Message notification tracking
+  unreadMessageCountMap = new Map<number, number>();
 
   supplierUiPages: SupplierUiPage[] = [
     { page: 'Supplier Listings', purpose: 'Manage inventory listings, pricing, and stock', status: 'In Progress' },
@@ -266,6 +270,21 @@ export class InventoryManagementPage implements OnInit {
     try {
       const response = await this.inventoryService.getOwnerSupplyOrders().toPromise();
       this.ownerOrders = response?.data || [];
+
+      // Load unread message counts for each order
+      for (const order of this.ownerOrders) {
+        try {
+          const messages = await this.messagingService.getMessages(order.id).toPromise();
+          const unreadCount = (messages || []).filter(msg => !msg.is_read).length;
+          if (unreadCount > 0) {
+            this.unreadMessageCountMap.set(order.id, unreadCount);
+          } else {
+            this.unreadMessageCountMap.delete(order.id);
+          }
+        } catch (msgError) {
+          console.error(`Error loading messages for order ${order.id}:`, msgError);
+        }
+      }
     } catch (error: any) {
       console.error('Error loading owner supply orders:', error);
       this.showToast('Unable to load your supply orders', 'danger');
@@ -344,6 +363,21 @@ export class InventoryManagementPage implements OnInit {
     try {
       const response = await this.inventoryService.getSupplierSupplyOrders().toPromise();
       this.supplierOrders = response?.data || [];
+
+      // Load unread message counts for each order
+      for (const order of this.supplierOrders) {
+        try {
+          const messages = await this.messagingService.getMessages(order.id).toPromise();
+          const unreadCount = (messages || []).filter(msg => !msg.is_read).length;
+          if (unreadCount > 0) {
+            this.unreadMessageCountMap.set(order.id, unreadCount);
+          } else {
+            this.unreadMessageCountMap.delete(order.id);
+          }
+        } catch (msgError) {
+          console.error(`Error loading messages for order ${order.id}:`, msgError);
+        }
+      }
     } catch (error: any) {
       console.error('Error loading supplier orders:', error);
       this.showToast('Unable to load supplier orders', 'danger');
@@ -507,6 +541,30 @@ export class InventoryManagementPage implements OnInit {
       return;
     }
 
+    // Get supplier name for payment modal
+    const supplierName = this.cart[0].listing.supplier?.name || 'Supplier';
+    const totalAmount = this.cart.reduce((sum, item) => sum + (item.listing.price_per_unit * item.quantity), 0);
+
+    // Show payment modal
+    const paymentModal = await this.modalController.create({
+      component: SupplyOrderPaymentModalPage,
+      componentProps: {
+        totalAmount,
+        supplierName
+      },
+      cssClass: 'payment-modal',
+      backdropDismiss: false
+    });
+
+    await paymentModal.present();
+    const { data: paymentData } = await paymentModal.onDidDismiss();
+
+    // If user cancelled, don't proceed
+    if (!paymentData) {
+      this.showToast('Order cancelled', 'warning');
+      return;
+    }
+
     const loading = await this.loadingController.create({
       message: 'Submitting order...'
     });
@@ -518,7 +576,7 @@ export class InventoryManagementPage implements OnInit {
           supplier_inventory_item_id: item.listing.id,
           quantity: item.quantity,
         })),
-        payment_method: this.selectedSupplyPaymentMethod,
+        payment_method: paymentData.method,
         notes: this.supplyNotes || undefined,
         delivery_date: this.supplyDeliveryDate || undefined,
       }).toPromise();
@@ -626,7 +684,8 @@ export class InventoryManagementPage implements OnInit {
         orderId: order.id,
         supplierId: order.supplier_id,
         karenderiaId: order.karenderia_id,
-        otherPartyName: order.karenderia?.business_name || order.karenderia?.name || 'Karenderia Owner'
+        otherPartyName: order.karenderia?.business_name || order.karenderia?.name || 'Karenderia Owner',
+        onDismiss: () => this.refreshUnreadCount(order.id)
       },
       cssClass: 'messaging-modal',
       breakpoints: [0, 0.5, 1],
@@ -643,7 +702,8 @@ export class InventoryManagementPage implements OnInit {
         orderId: order.id,
         supplierId: order.supplier_id,
         karenderiaId: order.karenderia_id,
-        otherPartyName: order.supplier?.name || 'Supplier'
+        otherPartyName: order.supplier?.name || 'Supplier',
+        onDismiss: () => this.refreshUnreadCount(order.id)
       },
       cssClass: 'messaging-modal',
       breakpoints: [0, 0.5, 1],
@@ -673,7 +733,10 @@ export class InventoryManagementPage implements OnInit {
         { text: 'Cancel', role: 'cancel' },
         {
           text: 'Create',
-          handler: (data) => this.performAddSupplierListing(data)
+          handler: async (data) => {
+            const success = await this.performAddSupplierListing(data);
+            return success;
+          }
         }
       ]
     });
@@ -681,10 +744,10 @@ export class InventoryManagementPage implements OnInit {
     await alert.present();
   }
 
-  async performAddSupplierListing(data: any) {
+  async performAddSupplierListing(data: any): Promise<boolean> {
     if (!data.item_name || !data.category || !data.unit || !data.price_per_unit || !data.available_stock) {
       this.showToast('Please complete all required listing fields', 'danger');
-      return;
+      return false;
     }
 
     const loading = await this.loadingController.create({
@@ -703,11 +766,13 @@ export class InventoryManagementPage implements OnInit {
         minimum_order_quantity: data.minimum_order_quantity ? Number(data.minimum_order_quantity) : 1,
       }).toPromise();
 
-      this.showToast('Supplier listing created', 'success');
-      this.loadSupplierListings();
+      this.showToast('Supplier listing created successfully!', 'success');
+      await this.loadSupplierListings();
+      return true;
     } catch (error: any) {
       console.error('Error creating supplier listing:', error);
       this.showToast(error?.error?.error || 'Unable to create listing', 'danger');
+      return false;
     } finally {
       loading.dismiss();
     }
@@ -729,7 +794,10 @@ export class InventoryManagementPage implements OnInit {
         { text: 'Cancel', role: 'cancel' },
         {
           text: 'Save',
-          handler: (data) => this.performEditSupplierListing(listing.id, data)
+          handler: async (data) => {
+            const success = await this.performEditSupplierListing(listing.id, data);
+            return success;
+          }
         }
       ]
     });
@@ -737,7 +805,7 @@ export class InventoryManagementPage implements OnInit {
     await alert.present();
   }
 
-  async performEditSupplierListing(listingId: number, data: any) {
+  async performEditSupplierListing(listingId: number, data: any): Promise<boolean> {
     const loading = await this.loadingController.create({
       message: 'Updating listing...'
     });
@@ -754,11 +822,13 @@ export class InventoryManagementPage implements OnInit {
         minimum_order_quantity: data.minimum_order_quantity ? Number(data.minimum_order_quantity) : undefined,
       }).toPromise();
 
-      this.showToast('Listing updated', 'success');
-      this.loadSupplierListings();
+      this.showToast('Listing updated successfully!', 'success');
+      await this.loadSupplierListings();
+      return true;
     } catch (error: any) {
       console.error('Error updating supplier listing:', error);
       this.showToast(error?.error?.error || 'Unable to update listing', 'danger');
+      return false;
     } finally {
       loading.dismiss();
     }
@@ -1360,5 +1430,37 @@ export class InventoryManagementPage implements OnInit {
    */
   getSupplierOrderCountByStatus(status: string): number {
     return this.supplierOrders.filter(o => o.status === status).length;
+  }
+
+  /**
+   * Get unread message count for an order
+   */
+  getUnreadMessageCount(orderId: number): number {
+    // Return count from unread map (will be updated when messages are loaded)
+    return this.unreadMessageCountMap.get(orderId) || 0;
+  }
+
+  /**
+   * Mark order messages as read
+   */
+  markOrderMessagesAsRead(orderId: number) {
+    this.unreadMessageCountMap.delete(orderId);
+  }
+
+  /**
+   * Refresh unread message count for an order (called when messaging modal closes)
+   */
+  async refreshUnreadCount(orderId: number) {
+    try {
+      const messages = await this.messagingService.getMessages(orderId).toPromise();
+      const unreadCount = (messages || []).filter(msg => !msg.is_read).length;
+      if (unreadCount > 0) {
+        this.unreadMessageCountMap.set(orderId, unreadCount);
+      } else {
+        this.unreadMessageCountMap.delete(orderId);
+      }
+    } catch (error) {
+      console.error(`Error refreshing message count for order ${orderId}:`, error);
+    }
   }
 }

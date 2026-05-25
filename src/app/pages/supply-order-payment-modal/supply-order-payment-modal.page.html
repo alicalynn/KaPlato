@@ -1,0 +1,216 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-button (click)="dismiss()">
+        <ion-icon name="close-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Select Payment Method</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="payment-modal-content">
+  <!-- Order Summary -->
+  <ion-card class="order-summary">
+    <ion-card-header>
+      <ion-card-title>Order Summary</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <div class="summary-item">
+        <span>Supplier:</span>
+        <strong>{{ supplierName }}</strong>
+      </div>
+      <div class="summary-item">
+        <span>Total Amount:</span>
+        <strong class="amount">₱{{ (totalAmount || 0) | number: '1.2-2' }}</strong>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Payment Methods -->
+  <div class="payment-methods">
+    <h3>Choose Payment Method</h3>
+
+    <!-- COD -->
+    <div class="payment-option" [class.selected]="selectedMethod === 'cod'" 
+         (click)="selectPaymentMethod('cod')">
+      <div class="option-icon">
+        <ion-icon name="cash-outline"></ion-icon>
+      </div>
+      <div class="option-content">
+        <h4>Cash on Delivery</h4>
+        <p>Pay when order arrives</p>
+      </div>
+      <ion-icon name="checkmark-circle" *ngIf="selectedMethod === 'cod'"></ion-icon>
+    </div>
+
+    <!-- PayMaya Sandbox -->
+    <div class="payment-option" [class.selected]="selectedMethod === 'paymaya_sandbox'" 
+         (click)="selectPaymentMethod('paymaya_sandbox')">
+      <div class="option-icon">
+        <ion-icon name="card-outline"></ion-icon>
+      </div>
+      <div class="option-content">
+        <h4>PayMaya (Sandbox)</h4>
+        <p>Test credit/debit card</p>
+      </div>
+      <ion-icon name="checkmark-circle" *ngIf="selectedMethod === 'paymaya_sandbox'"></ion-icon>
+    </div>
+
+    <!-- GCash -->
+    <div class="payment-option" [class.selected]="selectedMethod === 'gcash'" 
+         (click)="selectPaymentMethod('gcash')">
+      <div class="option-icon">
+        <ion-icon name="wallet-outline"></ion-icon>
+      </div>
+      <div class="option-content">
+        <h4>GCash</h4>
+        <p>Mobile wallet payment</p>
+      </div>
+      <ion-icon name="checkmark-circle" *ngIf="selectedMethod === 'gcash'"></ion-icon>
+    </div>
+
+    <!-- Bank Transfer -->
+    <div class="payment-option" [class.selected]="selectedMethod === 'bank_transfer'" 
+         (click)="selectPaymentMethod('bank_transfer')">
+      <div class="option-icon">
+        <ion-icon name="swap-horizontal-outline"></ion-icon>
+      </div>
+      <div class="option-content">
+        <h4>Bank Transfer</h4>
+        <p>Direct bank payment</p>
+      </div>
+      <ion-icon name="checkmark-circle" *ngIf="selectedMethod === 'bank_transfer'"></ion-icon>
+    </div>
+  </div>
+
+  <!-- PayMaya Form (Sandbox) -->
+  <div *ngIf="selectedMethod === 'paymaya_sandbox'" class="payment-form-section">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Card Details (Sandbox Test)</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p class="info-text">
+          <ion-icon name="information-circle-outline"></ion-icon>
+          Use test card numbers for sandbox testing
+        </p>
+
+        <!-- Cardholder Name -->
+        <ion-item class="form-item">
+          <ion-label position="floating">Cardholder Name</ion-label>
+          <ion-input 
+            [(ngModel)]="paymentForm.cardholderName"
+            placeholder="John Doe"
+            type="text">
+          </ion-input>
+        </ion-item>
+
+        <!-- Card Number -->
+        <ion-item class="form-item">
+          <ion-label position="floating">Card Number</ion-label>
+          <ion-input 
+            [value]="paymentForm.cardNumber"
+            (input)="onCardNumberChange($event)"
+            placeholder="1234 5678 9012 3456"
+            maxlength="19"
+            type="text">
+          </ion-input>
+        </ion-item>
+
+        <div class="card-details-row">
+          <!-- Expiry Date -->
+          <ion-item class="form-item">
+            <ion-label position="floating">Expiry (MM/YY)</ion-label>
+            <ion-input 
+              [value]="paymentForm.expiryDate"
+              (input)="onExpiryDateChange($event)"
+              placeholder="12/25"
+              maxlength="5"
+              type="text">
+            </ion-input>
+          </ion-item>
+
+          <!-- CVV -->
+          <ion-item class="form-item">
+            <ion-label position="floating">CVV</ion-label>
+            <ion-input 
+              [value]="paymentForm.cvv"
+              (input)="onCvvChange($event)"
+              placeholder="123"
+              maxlength="4"
+              type="text"
+              inputmode="numeric">
+            </ion-input>
+          </ion-item>
+        </div>
+
+        <div class="test-cards">
+          <p class="test-label">Test Card Numbers:</p>
+          <ul>
+            <li><strong>Visa:</strong> 4111 1111 1111 1111</li>
+            <li><strong>Mastercard:</strong> 5555 5555 5555 4444</li>
+            <li><strong>Expiry:</strong> Any future date (MM/YY)</li>
+            <li><strong>CVV:</strong> Any 3 digits</li>
+          </ul>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <!-- Other Payment Methods Info -->
+  <div *ngIf="selectedMethod === 'gcash'" class="payment-form-section">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>GCash Payment</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p>You will be redirected to GCash to complete the payment.</p>
+        <p class="info-text">GCash reference number will be sent to your registered phone number.</p>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <div *ngIf="selectedMethod === 'bank_transfer'" class="payment-form-section">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Bank Transfer Details</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p>Bank transfer instructions will be sent to your email after confirming this order.</p>
+        <p class="info-text">Please complete the transfer within 24 hours to avoid order cancellation.</p>
+      </ion-card-content>
+    </ion-card>
+  </div>
+
+  <div *ngIf="selectedMethod === 'cod'" class="payment-form-section">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Cash on Delivery</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <p>Pay the exact amount (₱{{ (totalAmount || 0) | number: '1.2-2' }}) when your order arrives.</p>
+        <p class="info-text">Make sure you have cash available at the time of delivery.</p>
+      </ion-card-content>
+    </ion-card>
+  </div>
+</ion-content>
+
+<ion-footer>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button color="medium" (click)="dismiss()">
+        Cancel
+      </ion-button>
+    </ion-buttons>
+    <ion-buttons slot="end">
+      <ion-button 
+        color="primary" 
+        [disabled]="isProcessing"
+        (click)="confirmPayment()">
+        <ion-spinner *ngIf="isProcessing" name="circular"></ion-spinner>
+        <span *ngIf="!isProcessing">Confirm Payment</span>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-footer>

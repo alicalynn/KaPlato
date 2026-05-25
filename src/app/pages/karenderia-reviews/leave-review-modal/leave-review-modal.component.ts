@@ -113,7 +113,7 @@ export class LeaveReviewModalComponent implements OnInit {
     } catch (error: any) {
       await loading.dismiss();
       console.error('Error submitting review:', error);
-      const errorMessage = error?.error?.error || 'Failed to submit review';
+      const errorMessage = error?.error?.error || error?.error?.message || 'Failed to submit review';
       this.showToast(errorMessage, 'danger');
     } finally {
       this.isSaving = false;
