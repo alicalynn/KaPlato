@@ -109,6 +109,8 @@ export interface SupplyOrder {
   total_amount: number;
   notes?: string;
   delivery_date?: string;
+  owner_confirmed_delivery?: boolean;
+  owner_confirmed_delivery_at?: string;
   items: SupplyOrderItem[];
   supplier?: {
     id: number;

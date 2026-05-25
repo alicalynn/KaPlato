@@ -214,6 +214,138 @@
         </ion-card-content>
       </ion-card>
 
+      <!-- Customer Reviews Section -->
+      <ion-card class="reviews-section-card">
+        <ion-card-header>
+          <div class="card-header-title">
+            <ion-card-title>
+              <ion-icon name="chatbubbles" color="primary"></ion-icon>
+              Customer Reviews
+            </ion-card-title>
+          </div>
+        </ion-card-header>
+        
+        <ion-card-content>
+          <!-- Review Stats -->
+          <div class="review-stats">
+            <div class="stat-box">
+              <div class="stat-number">{{ averageRating | number:'1.1-1' }}</div>
+              <div class="stat-label">Average Rating</div>
+              <div class="stars">
+                <ion-icon *ngFor="let i of [1,2,3,4,5]" 
+                  [name]="i <= Math.round(averageRating) ? 'star' : 'star-outline'"
+                  [class.filled]="i <= Math.round(averageRating)">
+                </ion-icon>
+              </div>
+            </div>
+            
+            <div class="stat-box">
+              <div class="stat-number">{{ totalReviews }}</div>
+              <div class="stat-label">Total Reviews</div>
+            </div>
+            
+            <div class="stat-box">
+              <div class="stat-number">{{ approvedReviews }}</div>
+              <div class="stat-label">Approved</div>
+            </div>
+            
+            <div class="stat-box">
+              <div class="stat-number">{{ pendingReviews }}</div>
+              <div class="stat-label">Pending Review</div>
+            </div>
+          </div>
+
+          <!-- Filter/Sort Controls -->
+          <div class="review-controls">
+            <div class="filter-group">
+              <label>Filter by Rating:</label>
+              <select [(ngModel)]="selectedRatingFilter" (change)="filterReviews()">
+                <option value="">All Ratings</option>
+                <option value="5">5 Stars</option>
+                <option value="4">4 Stars</option>
+                <option value="3">3 Stars</option>
+                <option value="2">2 Stars</option>
+                <option value="1">1 Star</option>
+              </select>
+            </div>
+            
+            <div class="filter-group">
+              <label>Sort by:</label>
+              <select [(ngModel)]="reviewSortBy" (change)="filterReviews()">
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="highest">Highest Rating</option>
+                <option value="lowest">Lowest Rating</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Recent Reviews List -->
+          <div *ngIf="isLoadingReviews" class="loading-reviews">
+            <ion-spinner></ion-spinner>
+            <p>Loading reviews...</p>
+          </div>
+
+          <div *ngIf="!isLoadingReviews && filteredReviews.length === 0" class="no-reviews">
+            <ion-icon name="chatbubble-outline"></ion-icon>
+            <p>No reviews yet. Help customers by providing excellent service!</p>
+          </div>
+
+          <div *ngIf="!isLoadingReviews && filteredReviews.length > 0" class="reviews-list">
+            <div class="review-item" *ngFor="let review of filteredReviews.slice(0, 3)">
+              <div class="review-header">
+                <div class="reviewer-info">
+                  <strong>{{ review.reviewer?.name || 'Anonymous' }}</strong>
+                  <small class="review-date">{{ review.created_at | date:'short' }}</small>
+                </div>
+                <div class="review-rating">
+                  <ion-icon *ngFor="let i of [1,2,3,4,5]" 
+                    [name]="i <= review.rating ? 'star' : 'star-outline'"
+                    [class.filled]="i <= review.rating">
+                  </ion-icon>
+                </div>
+              </div>
+              
+              <div class="review-status">
+                <ion-chip *ngIf="review.status === 'approved'" color="success" size="small">
+                  <ion-icon name="checkmark-circle" slot="start"></ion-icon>
+                  Approved
+                </ion-chip>
+                <ion-chip *ngIf="review.status === 'pending'" color="warning" size="small">
+                  <ion-icon name="time" slot="start"></ion-icon>
+                  Pending
+                </ion-chip>
+                <ion-chip *ngIf="review.status === 'rejected'" color="danger" size="small">
+                  <ion-icon name="close-circle" slot="start"></ion-icon>
+                  Rejected
+                </ion-chip>
+              </div>
+              
+              <p class="review-comment" *ngIf="review.comment">{{ review.comment }}</p>
+              
+              <div class="review-feedback" *ngIf="review.food_feedback">
+                <small><strong>Feedback:</strong> {{ review.food_feedback }}</small>
+              </div>
+              
+              <div class="review-tags" *ngIf="review.tags && review.tags.length > 0">
+                <ion-chip *ngFor="let tag of review.tags" size="small" outline>
+                  {{ tag }}
+                </ion-chip>
+              </div>
+            </div>
+
+            <ion-button 
+              fill="outline" 
+              expand="block" 
+              class="view-all-reviews"
+              *ngIf="filteredReviews.length > 3"
+              (click)="viewAllReviews()">
+              View All Reviews ({{ filteredReviews.length }})
+            </ion-button>
+          </div>
+        </ion-card-content>
+      </ion-card>
+
     </div>
 
     <!-- Floating Action Button -->

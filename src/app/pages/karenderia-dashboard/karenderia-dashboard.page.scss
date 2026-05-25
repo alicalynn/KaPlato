@@ -903,3 +903,237 @@
     }
   }
 }
+
+// Reviews Section Styling
+.reviews-section-card {
+  margin-top: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  
+  ion-card-header {
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f0f0f0;
+    
+    .card-header-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      
+      ion-card-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+        font-size: 1.2rem;
+        
+        ion-icon {
+          font-size: 1.5rem;
+          color: #3b82f6;
+        }
+      }
+    }
+  }
+}
+
+.review-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+  
+  .stat-box {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid #bae6fd;
+    
+    .stat-number {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #0284c7;
+      margin-bottom: 4px;
+    }
+    
+    .stat-label {
+      font-size: 0.875rem;
+      color: #0369a1;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .stars {
+      display: flex;
+      justify-content: center;
+      gap: 2px;
+      
+      ion-icon {
+        font-size: 1rem;
+        color: #fbbf24;
+        
+        &:not(.filled) {
+          color: #d1d5db;
+        }
+      }
+    }
+  }
+}
+
+.review-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 12px;
+  
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    
+    label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #374151;
+    }
+    
+    select {
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background: white;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      
+      &:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+    }
+  }
+}
+
+.loading-reviews,
+.no-reviews {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #6b7280;
+  
+  ion-spinner {
+    --color: #3b82f6;
+    margin-bottom: 12px;
+  }
+  
+  ion-icon {
+    font-size: 3rem;
+    color: #d1d5db;
+    margin-bottom: 12px;
+  }
+  
+  p {
+    text-align: center;
+    font-size: 0.95rem;
+  }
+}
+
+.reviews-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  
+  .review-item {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.2s;
+    
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border-color: #d1d5db;
+    }
+    
+    .review-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 12px;
+      
+      .reviewer-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        
+        strong {
+          font-size: 0.95rem;
+          color: #111827;
+        }
+        
+        .review-date {
+          font-size: 0.8rem;
+          color: #9ca3af;
+        }
+      }
+      
+      .review-rating {
+        display: flex;
+        gap: 2px;
+        
+        ion-icon {
+          font-size: 1rem;
+          color: #fbbf24;
+          
+          &:not(.filled) {
+            color: #d1d5db;
+          }
+        }
+      }
+    }
+    
+    .review-status {
+      margin-bottom: 12px;
+      
+      ion-chip {
+        font-size: 0.8rem;
+      }
+    }
+    
+    .review-comment {
+      margin: 12px 0;
+      font-size: 0.9rem;
+      color: #374151;
+      line-height: 1.5;
+    }
+    
+    .review-feedback {
+      margin: 8px 0;
+      font-size: 0.85rem;
+      color: #4b5563;
+      background: #f3f4f6;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border-left: 3px solid #3b82f6;
+    }
+    
+    .review-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+      
+      ion-chip {
+        font-size: 0.8rem;
+      }
+    }
+  }
+}
+
+.view-all-reviews {
+  margin-top: 12px;
+}
