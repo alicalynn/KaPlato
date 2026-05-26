@@ -66,6 +66,10 @@ export class InventoryManagementPage implements OnInit {
   supplyNotes = '';
   supplyDeliveryDate = '';
   selectedSupplyPaymentMethod: 'cod' | 'paymaya_sandbox' | 'paypal_sandbox' = 'cod';
+  
+  // Order review/summary state
+  pendingPaymentData: any = null;
+  showOrderReview = false;
 
   // Message notification tracking
   unreadMessageCountMap = new Map<number, number>();
@@ -532,7 +536,7 @@ export class InventoryManagementPage implements OnInit {
   }
 
   async submitSupplyOrder() {
-    this.openSupplyOrderForm();
+    await this.confirmSupplyOrder();
   }
 
   async confirmSupplyOrder() {
@@ -565,6 +569,22 @@ export class InventoryManagementPage implements OnInit {
       return;
     }
 
+    // Store payment data and show order review
+    this.pendingPaymentData = paymentData;
+    this.showOrderReview = true;
+  }
+
+  cancelOrderReview() {
+    this.showOrderReview = false;
+    this.pendingPaymentData = null;
+  }
+
+  async submitOrderFromReview() {
+    if (!this.cart.length) {
+      this.showToast('Your supply cart is empty', 'warning');
+      return;
+    }
+
     const loading = await this.loadingController.create({
       message: 'Submitting order...'
     });
@@ -576,14 +596,15 @@ export class InventoryManagementPage implements OnInit {
           supplier_inventory_item_id: item.listing.id,
           quantity: item.quantity,
         })),
-        payment_method: paymentData.method,
+        payment_method: this.pendingPaymentData.method,
         notes: this.supplyNotes || undefined,
         delivery_date: this.supplyDeliveryDate || undefined,
       }).toPromise();
 
       this.showToast('Supply order submitted successfully', 'success');
       this.clearCart();
-      this.showSupplyOrderForm = false;
+      this.showOrderReview = false;
+      this.pendingPaymentData = null;
       this.supplyNotes = '';
       this.supplyDeliveryDate = '';
       this.selectedSupplyPaymentMethod = 'cod';

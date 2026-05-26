@@ -317,38 +317,50 @@
         </div>
         <div class="cart-total">Total: ₱{{ getCartTotal() | number:'1.2-2' }}</div>
 
-        <div class="submit-order-box" *ngIf="showSupplyOrderForm">
-          <div class="submit-order-header">
-            <div class="submit-order-title">Submit Supply Order</div>
-            <div class="submit-order-total">Total: ₱{{ getCartTotal() | number:'1.2-2' }}</div>
+        <div class="order-review-box" *ngIf="showOrderReview">
+          <div class="review-header">
+            <div class="review-title">Review Your Order</div>
+            <div class="review-total">Total: ₱{{ getCartTotal() | number:'1.2-2' }}</div>
           </div>
 
-          <ion-item lines="full" class="form-row">
-            <ion-label position="stacked">Mode of Payment</ion-label>
-            <ion-select [(ngModel)]="selectedSupplyPaymentMethod" interface="popover" placeholder="Choose mode of payment">
-              <ion-select-option value="cod">Cash on Delivery (COD)</ion-select-option>
-              <ion-select-option value="paymaya_sandbox">PayMaya (Sandbox)</ion-select-option>
-              <ion-select-option value="paypal_sandbox">PayPal (Sandbox)</ion-select-option>
-            </ion-select>
-          </ion-item>
+          <!-- Order Items -->
+          <div class="review-section">
+            <h4>Order Items</h4>
+            <div class="review-item" *ngFor="let item of cart">
+              <div class="item-name">{{ item.listing.item_name }}</div>
+              <div class="item-details">
+                {{ item.quantity }} {{ item.listing.unit }} × ₱{{ item.listing.price_per_unit | number:'1.2-2' }} = <strong>₱{{ (item.quantity * item.listing.price_per_unit) | number:'1.2-2' }}</strong>
+              </div>
+            </div>
+          </div>
 
-          <ion-item lines="full" class="form-row">
-            <ion-label position="stacked">Delivery Date</ion-label>
+          <!-- Payment Method -->
+          <div class="review-section">
+            <h4>Payment Method</h4>
+            <div class="payment-info">
+              {{ getPaymentMethodLabel(pendingPaymentData?.method) }}
+            </div>
+          </div>
+
+          <!-- Delivery Date (Optional) -->
+          <ion-item lines="full" class="form-row" *ngIf="showOrderReview">
+            <ion-label position="stacked">Delivery Date (Optional)</ion-label>
             <ion-input type="date" [(ngModel)]="supplyDeliveryDate" placeholder="mm/dd/yyyy"></ion-input>
           </ion-item>
 
-          <ion-item lines="full" class="form-row">
+          <!-- Notes (Optional) -->
+          <ion-item lines="full" class="form-row" *ngIf="showOrderReview">
             <ion-label position="stacked">Notes for supplier (optional)</ion-label>
             <ion-textarea [(ngModel)]="supplyNotes" placeholder="Add any instructions here"></ion-textarea>
           </ion-item>
 
-          <div class="submit-actions">
-            <ion-button fill="outline" color="medium" (click)="closeSupplyOrderForm()">Cancel</ion-button>
-            <ion-button fill="solid" color="success" (click)="confirmSupplyOrder()">Submit Order</ion-button>
+          <div class="review-actions">
+            <ion-button fill="outline" color="medium" (click)="cancelOrderReview()">Cancel</ion-button>
+            <ion-button fill="solid" color="success" (click)="submitOrderFromReview()">Submit Order</ion-button>
           </div>
         </div>
 
-        <div class="cart-buttons" *ngIf="!showSupplyOrderForm">
+        <div class="cart-buttons" *ngIf="!showOrderReview">
           <ion-button fill="outline" color="medium" (click)="clearCart()">Clear</ion-button>
           <ion-button fill="solid" color="success" (click)="submitSupplyOrder()">Choose MOP</ion-button>
         </div>

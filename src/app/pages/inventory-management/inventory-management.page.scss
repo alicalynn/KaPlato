@@ -225,6 +225,102 @@
       }
     }
   }
+
+  .order-review-box {
+    position: relative;
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(56, 142, 60, 0.08));
+    border: 1px solid rgba(76, 175, 80, 0.2);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.1);
+
+    .review-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid rgba(76, 175, 80, 0.2);
+
+      .review-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--ion-color-dark);
+      }
+
+      .review-total {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--ion-color-success);
+      }
+    }
+
+    .review-section {
+      margin-bottom: 14px;
+
+      h4 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--ion-color-dark);
+        margin: 0 0 8px 0;
+      }
+    }
+
+    .review-item {
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 8px;
+      margin-bottom: 6px;
+
+      .item-name {
+        font-weight: 600;
+        color: var(--ion-color-dark);
+        font-size: 0.95rem;
+      }
+
+      .item-details {
+        font-size: 0.85rem;
+        color: var(--ion-color-medium);
+        margin-top: 4px;
+      }
+    }
+
+    .payment-info {
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 8px;
+      font-weight: 600;
+      color: var(--ion-color-primary);
+    }
+
+    ion-item {
+      --background: rgba(255, 255, 255, 0.7);
+      margin: 8px 0;
+      border-radius: 8px;
+      --border-radius: 8px;
+    }
+
+    .review-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(76, 175, 80, 0.2);
+
+      ion-button {
+        flex: 1;
+        margin: 0;
+        min-height: 42px;
+      }
+
+      ion-button:last-child {
+        --background: linear-gradient(90deg, #4CAF50 0%, #388E3C 100%);
+        --color: #fff;
+        font-weight: 700;
+      }
+    }
+  }
 }
 
 .loading-container {
