@@ -5,6 +5,7 @@ import { KarenderiaService } from '../services/karenderia.service';
 import { LoadingController, ToastController, AlertController } from '@ionic/angular';
 import { AuthService } from '../services/auth.service';
 import { Subscription } from 'rxjs';
+import { Geolocation } from '@capacitor/geolocation';
 
 interface BusinessInfo {
   name: string;
@@ -439,7 +440,8 @@ export class KarenderiaSettingsPage implements OnInit {
   }
 
   // Initiate location change from button click
-  async initiateLocationChange() {
+  // OLD CODE - previous implementation
+  /* async initiateLocationChange() {
     const alert = await this.alertController.create({
       header: 'Change Location',
       message: 'Please double-click on the map to set your new location.',
@@ -463,6 +465,89 @@ export class KarenderiaSettingsPage implements OnInit {
     });
 
     await alert.present();
+  } */
+
+  // //the first 1 - NEW: Change location and clear coordinates
+  async initiateLocationChange() {
+    const alert = await this.alertController.create({
+      header: 'Change Location',
+      message: 'Your location will be cleared. Please double-click on the map or use "Get My Current Location" to set your new location.',
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+          handler: () => {
+            this.isChangeLocationMode = false;
+            console.log('Location change cancelled');
+          }
+        },
+        {
+          text: 'Confirm Change',
+          handler: () => {
+            // Clear the location coordinates
+            this.locationSettings.latitude = 0;
+            this.locationSettings.longitude = 0;
+            this.isChangeLocationMode = false;
+            this.showToast('Location cleared. You can now use "Get My Current Location" or double-click the map to set a new location.', 'info');
+            console.log('Location cleared, ready for new location');
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  // Get current device location
+  async getCurrentLocation() {
+    try {
+      const loading = await this.loadingController.create({
+        message: 'Getting your current location...'
+      });
+      await loading.present();
+
+      // Request location permission and get current coordinates
+      const coordinates = await Geolocation.getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      });
+
+      if (coordinates && coordinates.coords) {
+        this.locationSettings.latitude = coordinates.coords.latitude;
+        this.locationSettings.longitude = coordinates.coords.longitude;
+        
+        console.log('Current location obtained:', {
+          lat: coordinates.coords.latitude,
+          lng: coordinates.coords.longitude
+        });
+
+        await this.showToast('Current location set successfully!', 'success');
+      } else {
+        await this.showToast('Unable to retrieve location. Please try again.', 'warning');
+      }
+
+      await loading.dismiss();
+    } catch (error) {
+      console.error('Error getting current location:', error);
+      
+      // Handle specific error cases
+      let errorMessage = 'Unable to get your location. ';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('permission')) {
+          errorMessage += 'Please enable location permissions in your device settings.';
+        } else if (error.message.includes('timeout')) {
+          errorMessage += 'Location request timed out. Please try again.';
+        } else {
+          errorMessage += error.message;
+        }
+      } else {
+        errorMessage += 'Please make sure location services are enabled.';
+      }
+
+      await this.showToast(errorMessage, 'danger');
+    }
   }
 
   // Check if location has been set

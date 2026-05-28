@@ -325,30 +325,46 @@
               </app-map>
             </div>
 
-            <!-- Change Location Button - Only show if location is already set -->
-            <div *ngIf="isLocationSet()" class="change-location-section">
-              <p *ngIf="!isChangeLocationMode" class="location-status" style="color: #28a745; margin-bottom: 15px;">
-                <ion-icon name="checkmark-circle" style="margin-right: 8px;"></ion-icon>
-                Location is set. You can explore the map freely.
-              </p>
-              <p *ngIf="isChangeLocationMode" class="location-status" style="color: #007bff; margin-bottom: 15px;">
-                <ion-icon name="reload-outline" style="margin-right: 8px;"></ion-icon>
-                Ready to change location. Double-click on the map to set the new location.
-              </p>
-              <button 
+            <!-- Get Current Location & Change Location Buttons Section -->
+            <div class="location-actions-section">
+              <!-- Get Current Location Button -->
+              
+              <!-- <button 
                 type="button"
-                class="secondary-btn"
-                (click)="initiateLocationChange()"
-                [disabled]="isChangeLocationMode"
-                style="width: 100%;">
-                <ion-icon name="create-outline" slot="start"></ion-icon>
-                {{ isChangeLocationMode ? 'Changing Location...' : 'Change Location' }}
-              </button>
+                class="primary-btn"
+                (click)="getCurrentLocation()"
+                [disabled]="isLocationSet()"
+                style="width: 100%; margin-bottom: 10px;"
+                [ngClass]="{'disabled-btn': isLocationSet()}">
+                <ion-icon name="locate-outline" slot="start"></ion-icon>
+                {{ isLocationSet() ? 'Current Location (Disabled - Location Already Set)' : 'Use My Current Location' }}
+              </button> -->
+
+
+              <div *ngIf="isLocationSet()" class="change-location-section">
+                <p *ngIf="!isChangeLocationMode" class="location-status" style="color: #28a745; margin-bottom: 15px;">
+                  <ion-icon name="checkmark-circle" style="margin-right: 8px;"></ion-icon>
+                  Location is set. You can explore the map freely.
+                </p>
+                <p *ngIf="isChangeLocationMode" class="location-status" style="color: #007bff; margin-bottom: 15px;">
+                  <ion-icon name="reload-outline" style="margin-right: 8px;"></ion-icon>
+                  Ready to change location. Double-click on the map to set the new location.
+                </p>
+                <button 
+                  type="button"
+                  class="secondary-btn"
+                  (click)="initiateLocationChange()"
+                  [disabled]="isChangeLocationMode"
+                  style="width: 100%;">
+                  <ion-icon name="create-outline" slot="start"></ion-icon>
+                  {{ isChangeLocationMode ? 'Changing Location...' : 'Change Location' }}
+                </button>
+              </div>
             </div>
 
             <!-- Location Coordinates -->
             <div class="form-group">
-              <label>Location Coordinates <span style="color: #666; font-size: 0.85em;">(Read-only - Set by map)</span></label>
+              <label>Location Coordinates <span style="color: #666; font-size: 0.85em;">(Read-only - Set by map or current location)</span></label>
               <div class="coordinates-display">
                 <div class="coordinate-item">
                   <label>Latitude</label>
