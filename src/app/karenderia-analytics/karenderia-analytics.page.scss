@@ -104,6 +104,95 @@
   }
 }
 
+// Compact empty-state banner (keeps dashboard visible)
+.modern-empty-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  margin: -8px 0 20px 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  .banner-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+
+    ion-icon {
+      font-size: 20px;
+      color: #4f46e5;
+    }
+  }
+
+  .banner-text {
+    flex: 1;
+    min-width: 0;
+
+    .banner-title {
+      font-weight: 800;
+      color: #111827;
+      letter-spacing: -0.01em;
+    }
+
+    .banner-subtitle {
+      margin-top: 2px;
+      font-size: 13px;
+      color: #6b7280;
+      line-height: 1.35;
+    }
+  }
+
+  .banner-cta {
+    --border-radius: 10px;
+    height: 36px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 640px) {
+    flex-wrap: wrap;
+    align-items: flex-start;
+
+    .banner-cta {
+      width: 100%;
+    }
+  }
+}
+
+// Section-level empty state (used in Top Items)
+.section-empty {
+  text-align: center;
+  padding: 18px 8px 4px;
+  color: #6b7280;
+
+  ion-icon {
+    font-size: 42px;
+    color: #cbd5e1;
+    margin-bottom: 10px;
+  }
+
+  h3 {
+    margin: 0 0 6px;
+    color: #111827;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+}
+
 // Modern Page Header
 .modern-page-header {
   background: rgba(255, 255, 255, 0.95);

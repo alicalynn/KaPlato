@@ -22,6 +22,19 @@ export class KarenderiaAnalyticsPage implements OnInit {
   // Chart data
   salesByTimeData: any[] = [];
   topItemsData: any[] = [];
+
+  readonly emptyAnalytics: SalesAnalytics = {
+    karenderiaId: '',
+    period: 'daily',
+    date: new Date(),
+    totalSales: 0,
+    totalOrders: 0,
+    totalProfit: 0,
+    averageOrderValue: 0,
+    salesByTimeOfDay: [],
+    topSellingItems: [],
+    seasonalTrends: []
+  };
   
   constructor(
     private analyticsService: AnalyticsService,
@@ -53,6 +66,10 @@ export class KarenderiaAnalyticsPage implements OnInit {
       this.updateChartData();
     } catch (error) {
       console.error('Error loading analytics:', error);
+      this.dailyAnalytics = null;
+      this.weeklyAnalytics = null;
+      this.monthlyAnalytics = null;
+      this.updateChartData();
     }
   }
 
@@ -67,12 +84,10 @@ export class KarenderiaAnalyticsPage implements OnInit {
   }
 
   updateChartData() {
-    const analytics = this.getSelectedAnalytics();
+    const analytics = this.getSelectedAnalyticsOrEmpty();
     
-    if (analytics) {
-      this.salesByTimeData = analytics.salesByTimeOfDay;
-      this.topItemsData = analytics.topSellingItems.slice(0, 5);
-    }
+    this.salesByTimeData = analytics.salesByTimeOfDay || [];
+    this.topItemsData = (analytics.topSellingItems || []).slice(0, 5);
   }
 
   onPeriodChange() {
@@ -88,6 +103,16 @@ export class KarenderiaAnalyticsPage implements OnInit {
     }
   }
 
+  getSelectedAnalyticsOrEmpty(): SalesAnalytics {
+    return this.getSelectedAnalytics() ?? this.emptyAnalytics;
+  }
+
+  hasAnyAnalyticsData(): boolean {
+    const a = this.getSelectedAnalytics();
+    if (!a) return false;
+    return (a.totalSales || 0) > 0 || (a.totalOrders || 0) > 0 || (a.totalProfit || 0) > 0;
+  }
+
   getCurrentSeason(): string {
     const month = new Date().getMonth() + 1;
     if (month >= 12 || month <= 2) return month === 12 ? 'christmas' : 'dry';
@@ -100,8 +125,8 @@ export class KarenderiaAnalyticsPage implements OnInit {
   }
 
   getProfitMarginPercentage(): number {
-    const analytics = this.getSelectedAnalytics();
-    if (!analytics || analytics.totalSales === 0) return 0;
+    const analytics = this.getSelectedAnalyticsOrEmpty();
+    if (analytics.totalSales === 0) return 0;
     return (analytics.totalProfit / analytics.totalSales) * 100;
   }
 
@@ -139,6 +164,7 @@ export class KarenderiaAnalyticsPage implements OnInit {
   }
 
   getMaxRevenue(): number {
-    return Math.max(...this.salesByTimeData.map(slot => slot.revenue));
+    if (!this.salesByTimeData || this.salesByTimeData.length === 0) return 0;
+    return Math.max(...this.salesByTimeData.map(slot => slot.revenue || 0));
   }
 }

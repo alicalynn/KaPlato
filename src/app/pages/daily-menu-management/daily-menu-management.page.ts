@@ -275,6 +275,7 @@ export class DailyMenuManagementPage implements OnInit {
         {
           name: 'quantity',
           type: 'number',
+          label: 'New Quantity',
           placeholder: 'New quantity',
           value: item.original_quantity,
           min: 0

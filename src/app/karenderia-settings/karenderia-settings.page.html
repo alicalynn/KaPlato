@@ -22,10 +22,6 @@
             <h2>{{ karenderiaStatus === 'rejected' ? 'Application rejected' : karenderiaStatus === 'pending' ? 'Application pending review' : 'Business profile' }}</h2>
             <p>{{ getStatusMessage() }}</p>
           </div>
-          <button class="save-btn status-action" (click)="saveChanges()" [disabled]="isSaving">
-            <ion-icon name="refresh-outline"></ion-icon>
-            {{ getPrimaryActionLabel() }}
-          </button>
         </div>
 
         <!-- Settings Tabs -->
