@@ -5,6 +5,7 @@ import { KarenderiaService } from '../services/karenderia.service';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 import { ToastController, LoadingController } from '@ionic/angular';
+import { Geolocation } from '@capacitor/geolocation';
 
 @Component({
   selector: 'app-home',
@@ -167,6 +168,47 @@ export class HomePage implements OnInit, OnDestroy {
   }
 
   private loadFeaturedKarenderias() {
+    // Get user's location first
+    this.getUserLocation().then(({ lat, lng }) => {
+      // Fetch karenderias within 5km radius
+      const radiusInMeters = 5000;
+      this.karenderiaService.getNearbyKarenderias(lat, lng, radiusInMeters).subscribe({
+        next: (karenderias) => {
+          const mapped = (karenderias || []).map(k => ({
+            id: k.id,
+            name: k.name || 'Karenderia',
+            address: k.address || 'No address',
+            location: {
+              latitude: k.location?.latitude || k.latitude || 10.3157,
+              longitude: k.location?.longitude || k.longitude || 123.9349
+            },
+            rating: k.rating || k.average_rating || 0,
+            priceRange: 'Budget',
+            cuisine: Array.isArray((k as any).cuisine) ? (k as any).cuisine : ['Filipino'],
+            isOpen: k.isOpen !== undefined ? k.isOpen : true,
+            deliveryTime: `${k.delivery_time_minutes || 30} min`,
+            deliveryFee: (k as any).delivery_fee || 25,
+            distance: k.distance || 0 // Distance in km if provided by API
+          }));
+
+          // Sort by rating (descending) and take top 6 "Popular near you"
+          const sorted = mapped.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+          this.featuredKarenderias = sorted.slice(0, 6);
+        },
+        error: (err) => {
+          console.error('Error fetching nearby karenderias:', err);
+          // Fallback to all karenderias if nearby fetch fails
+          this.fallbackLoadKarenderias();
+        }
+      });
+    }).catch(err => {
+      console.error('Error getting location:', err);
+      // Fallback to all karenderias if location fails
+      this.fallbackLoadKarenderias();
+    });
+  }
+
+  private fallbackLoadKarenderias() {
     this.karenderiaService.getAllKarenderias().subscribe({
       next: (karenderias) => {
         const mapped = (karenderias || []).map(k => ({
@@ -185,12 +227,51 @@ export class HomePage implements OnInit, OnDestroy {
           deliveryFee: (k as any).delivery_fee || 25
         }));
 
-        this.featuredKarenderias = mapped.slice(0, 6);
+        // Sort by rating (descending) and take top 6
+        const sorted = mapped.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        this.featuredKarenderias = sorted.slice(0, 6);
       },
       error: () => {
         this.featuredKarenderias = [];
       }
     });
+  }
+
+  private async getUserLocation(): Promise<{ lat: number; lng: number }> {
+    try {
+      // Try to get location using Capacitor Geolocation (works on mobile)
+      const coordinates = await Geolocation.getCurrentPosition();
+      return {
+        lat: coordinates.coords.latitude,
+        lng: coordinates.coords.longitude
+      };
+    } catch (err) {
+      console.warn('Capacitor geolocation failed, trying browser geolocation:', err);
+      
+      // Fallback to browser Geolocation API
+      return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            resolve({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            });
+          },
+          (error) => {
+            console.warn('Browser geolocation failed:', error);
+            // Use default location (Mandaue City, Cebu)
+            resolve({
+              lat: 10.3157,
+              lng: 123.9349
+            });
+          },
+          {
+            timeout: 10000,
+            enableHighAccuracy: false
+          }
+        );
+      });
+    }
   }
 
   async showToast(message: string) {
@@ -267,6 +348,28 @@ export class HomePage implements OnInit, OnDestroy {
 
   openAllergenProfile() {
     this.router.navigate(['/allergen-profile']);
+  }
+
+  async viewKarenderia(karenderia: any) {
+    console.log('👁️ Viewing karenderia details:', karenderia.name);
+    
+    if (!karenderia.id) {
+      console.error('❌ Karenderia ID is missing');
+      await this.showToast('Unable to view karenderia - information incomplete');
+      return;
+    }
+
+    try {
+      // Navigate to karenderia detail page with the karenderia data
+      await this.router.navigate(['/karenderia-detail', karenderia.id], {
+        state: { karenderia: karenderia }
+      });
+      
+      console.log('✅ Successfully navigated to karenderia detail page');
+    } catch (error) {
+      console.error('❌ Error navigating to karenderia detail:', error);
+      await this.showToast('Unable to view karenderia at this time');
+    }
   }
 
   async viewKarenderiaMenu(karenderia: any) {

@@ -17,8 +17,6 @@ export class LeaveReviewModalComponent implements OnInit {
 
   form: FormGroup;
   selectedRating = 0;
-  selectedFoodQuality = 0;
-  selectedDelivery = 0;
   isSaving = false;
 
   tagSuggestions = [
@@ -40,8 +38,6 @@ export class LeaveReviewModalComponent implements OnInit {
       rating: [0, Validators.required],
       comment: ['', [Validators.maxLength(2000)]],
       food_feedback: ['', [Validators.maxLength(1000)]],
-      food_quality_rating: [0],
-      delivery_experience_rating: [0],
     });
   }
 
@@ -50,16 +46,6 @@ export class LeaveReviewModalComponent implements OnInit {
   setRating(value: number) {
     this.selectedRating = value;
     this.form.patchValue({ rating: value });
-  }
-
-  setFoodQuality(value: number) {
-    this.selectedFoodQuality = value;
-    this.form.patchValue({ food_quality_rating: value });
-  }
-
-  setDelivery(value: number) {
-    this.selectedDelivery = value;
-    this.form.patchValue({ delivery_experience_rating: value });
   }
 
   toggleTag(tag: string) {
@@ -82,8 +68,19 @@ export class LeaveReviewModalComponent implements OnInit {
   }
 
   async submitReview() {
+    // Validate all required fields
+    const errors: string[] = [];
+
     if (this.selectedRating === 0) {
-      this.showToast('Please select a rating', 'warning');
+      errors.push('Please select a main rating (1-5 stars)');
+    }
+
+    if (!this.form.value.comment || this.form.value.comment.trim() === '') {
+      errors.push('Please write a comment or feedback');
+    }
+
+    if (errors.length > 0) {
+      this.showToast(errors.join(' • '), 'warning');
       return;
     }
 
@@ -96,26 +93,52 @@ export class LeaveReviewModalComponent implements OnInit {
     try {
       const formData = this.form.getRawValue();
       const reviewData = {
-        ...formData,
+        rating: formData.rating,
+        comment: formData.comment,
+        food_feedback: formData.food_feedback,
         tags: this.selectedTags.length > 0 ? this.selectedTags : null,
-        food_quality_rating: this.selectedFoodQuality || null,
-        delivery_experience_rating: this.selectedDelivery || null,
       };
 
-      await this.reviewService.createReview(this.karenderiaId, reviewData).toPromise();
+      const response: any = await this.reviewService.createReview(this.karenderiaId, reviewData).toPromise();
+      
+      console.log('Review submitted successfully:', response);
 
       await loading.dismiss();
-      this.showToast('Review submitted successfully!', 'success');
+      this.showToast('Review submitted successfully! Thank you for your feedback.', 'success');
       
-      await this.modalController.dismiss({
-        submitted: true
-      });
+      // Close modal after brief delay to ensure user sees success message
+      setTimeout(() => {
+        this.modalController.dismiss({
+          submitted: true
+        });
+      }, 500);
+
     } catch (error: any) {
       await loading.dismiss();
       console.error('Error submitting review:', error);
-      const errorMessage = error?.error?.error || error?.error?.message || 'Failed to submit review';
+      
+      // Handle validation errors from server
+      let errorMessage = 'Failed to submit review';
+      
+      // Check if this is a validation error (422)
+      if (error?.status === 422) {
+        if (error?.error?.errors) {
+          // Laravel validation errors
+          const fieldErrors = error.error.errors;
+          const errorMessages = Object.values(fieldErrors).flat() as string[];
+          errorMessage = errorMessages.join('\n');
+        } else if (error?.error?.error) {
+          errorMessage = error.error.error;
+        }
+      } else if (error?.error?.error) {
+        errorMessage = error.error.error;
+      } else if (error?.error?.message) {
+        errorMessage = error.error.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
       this.showToast(errorMessage, 'danger');
-    } finally {
       this.isSaving = false;
     }
   }

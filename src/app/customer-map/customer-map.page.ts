@@ -310,7 +310,8 @@ export class CustomerMapPage implements OnInit, OnDestroy {
             console.log('Navigate to menu for:', karenderia.id);
           }
         }
-      ]
+      ],
+      backdropDismiss: true
     });
     await alert.present();
   }

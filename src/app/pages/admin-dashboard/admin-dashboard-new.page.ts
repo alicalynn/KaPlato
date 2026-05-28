@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { 
   IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonButton,
   IonIcon, IonCard, IonCardContent, IonChip, IonSegment, IonSegmentButton,
-  IonLabel, IonBadge, AlertController, ToastController
+  IonLabel, IonBadge, AlertController, ToastController, ModalController
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { 
@@ -22,6 +22,7 @@ import {
 
 import { AuthService, User } from '../../services/auth.service';
 import { AdminService } from '../../services/admin.service';
+import { ReportInvestigationModalPage } from './report-investigation-modal/report-investigation-modal.page';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -33,7 +34,8 @@ import { AdminService } from '../../services/admin.service';
     FormsModule,
     IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonButton,
     IonIcon, IonCard, IonCardContent, IonChip, IonSegment, IonSegmentButton,
-    IonLabel, IonBadge
+    IonLabel, IonBadge,
+    ReportInvestigationModalPage
   ]
 })
 export class AdminDashboardPage implements OnInit, OnDestroy {
@@ -55,7 +57,8 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
     private adminService: AdminService,
     private router: Router,
     private alertCtrl: AlertController,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private modalController: ModalController
   ) {
     addIcons({
       logOutOutline,
@@ -197,6 +200,25 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
         this.showToast('Error loading reports', 'danger');
       }
     });
+  }
+
+  async investigateReport(report: any) {
+    const modal = await this.modalController.create({
+      component: ReportInvestigationModalPage,
+      componentProps: {
+        report: report
+      },
+      cssClass: 'investigation-modal',
+      backdropDismiss: false
+    });
+
+    await modal.present();
+    const { data } = await modal.onDidDismiss();
+
+    if (data?.success) {
+      this.loadReports();
+      this.loadDashboardData();
+    }
   }
 
   async quickApprove(karenderiaId: number) {

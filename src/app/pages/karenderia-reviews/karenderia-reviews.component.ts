@@ -11,7 +11,7 @@ import { ReportIssueModalComponent } from './report-issue-modal/report-issue-mod
   templateUrl: './karenderia-reviews.component.html',
   styleUrls: ['./karenderia-reviews.component.scss'],
   standalone: true,
-  imports: [IonicModule, CommonModule, FormsModule, ReactiveFormsModule, DatePipe, LeaveReviewModalComponent, ReportIssueModalComponent]
+  imports: [IonicModule, CommonModule, FormsModule, ReactiveFormsModule, DatePipe, LeaveReviewModalComponent]
 })
 export class KarenderiaReviewsComponent implements OnInit {
   @Input() karenderiaId: number = 0;

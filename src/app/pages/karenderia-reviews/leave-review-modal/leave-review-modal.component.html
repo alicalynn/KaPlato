@@ -38,40 +38,6 @@
       </ion-card-content>
     </ion-card>
 
-    <!-- Optional Ratings -->
-    <ion-card>
-      <ion-card-header>
-        <ion-card-title>Detailed Experience (Optional)</ion-card-title>
-      </ion-card-header>
-      <ion-card-content class="optional-ratings">
-        <!-- Food Quality -->
-        <div class="rating-item">
-          <label>Food Quality</label>
-          <div class="mini-star-selector">
-            <ion-icon *ngFor="let i of getStarArray(5)" 
-              [name]="i <= selectedFoodQuality ? 'star' : 'star-outline'"
-              (click)="setFoodQuality(i)"
-              [class.selected]="i <= selectedFoodQuality"
-              size="small">
-            </ion-icon>
-          </div>
-        </div>
-
-        <!-- Delivery Experience -->
-        <div class="rating-item">
-          <label>Delivery Experience</label>
-          <div class="mini-star-selector">
-            <ion-icon *ngFor="let i of getStarArray(5)" 
-              [name]="i <= selectedDelivery ? 'star' : 'star-outline'"
-              (click)="setDelivery(i)"
-              [class.selected]="i <= selectedDelivery"
-              size="small">
-            </ion-icon>
-          </div>
-        </div>
-      </ion-card-content>
-    </ion-card>
-
     <!-- Comments -->
     <ion-card>
       <ion-card-header>
@@ -80,7 +46,7 @@
       <ion-card-content>
         <!-- Main Comment -->
         <ion-item>
-          <ion-label position="stacked">Review Comment (Optional)</ion-label>
+          <ion-label position="stacked">Review Comment (Optio nal)</ion-label>
           <ion-textarea 
             formControlName="comment"
             placeholder="Share your experience... (max 2000 characters)"
@@ -90,7 +56,7 @@
 
         <!-- Food Feedback -->
         <ion-item>
-          <ion-label position="stacked">Food Feedback (Optional)</ion-label>
+          <ion-label position="stacked">Food Feedback</ion-label>
           <ion-textarea 
             formControlName="food_feedback"
             placeholder="What did you think about the food? (max 1000 characters)"

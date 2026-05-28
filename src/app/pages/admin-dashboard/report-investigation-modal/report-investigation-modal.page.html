@@ -1,0 +1,155 @@
+<ion-header>
+  <ion-toolbar color="primary">
+    <ion-buttons slot="start">
+      <ion-button (click)="closeModal()">
+        <ion-icon name="close"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>Investigate Report</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="investigation-content">
+  <!-- Report Summary -->
+  <ion-card class="report-summary-card">
+    <ion-card-header>
+      <ion-card-title>Report Details</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <!-- Karenderia Info -->
+      <div class="info-row">
+        <span class="label">Karenderia:</span>
+        <strong>{{ report.karenderia?.business_name || report.karenderia?.name }}</strong>
+      </div>
+
+      <!-- Reporter Info -->
+      <div class="info-row">
+        <span class="label">Reported by:</span>
+        <span>{{ report.reporter?.name }} ({{ report.reporter?.email }})</span>
+      </div>
+
+      <!-- Report Type -->
+      <div class="info-row">
+        <span class="label">Issue Type:</span>
+        <ion-chip [color]="getReportTypeColor(report.report_type)">
+          <ion-label>{{ formatReportType(report.report_type) }}</ion-label>
+        </ion-chip>
+      </div>
+
+      <!-- Similar Reports -->
+      <div class="info-row" *ngIf="report.similar_reports_count > 0">
+        <span class="label">Similar Reports:</span>
+        <ion-badge color="warning">{{ report.similar_reports_count }}</ion-badge>
+      </div>
+
+      <!-- Report Date -->
+      <div class="info-row">
+        <span class="label">Submitted:</span>
+        <span>{{ report.created_at | date:'medium' }}</span>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Original Report Description -->
+  <ion-card>
+    <ion-card-header>
+      <ion-card-title>Original Report</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <div class="report-description">
+        <h4>Description:</h4>
+        <p>{{ report.description }}</p>
+      </div>
+
+      <div class="report-description" *ngIf="report.evidence">
+        <h4>Evidence:</h4>
+        <p>{{ report.evidence }}</p>
+      </div>
+    </ion-card-content>
+  </ion-card>
+
+  <!-- Investigation Form -->
+  <form [formGroup]="form" (ngSubmit)="submitInvestigation()">
+    <ion-card>
+      <ion-card-header>
+        <ion-card-title>Investigation & Response</ion-card-title>
+      </ion-card-header>
+      <ion-card-content>
+        <!-- Status Selection -->
+        <ion-item lines="full" class="form-item">
+          <ion-label position="stacked">Report Status *</ion-label>
+          <ion-select formControlName="status" placeholder="Select status">
+            <ion-select-option *ngFor="let option of statusOptions" [value]="option.value">
+              {{ option.label }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <!-- Verified Checkbox -->
+        <ion-item lines="none" class="form-item checkbox-item">
+          <ion-label>Mark as Verified</ion-label>
+          <ion-checkbox slot="start" formControlName="verified"></ion-checkbox>
+        </ion-item>
+
+        <!-- Admin Response -->
+        <ion-item lines="full" class="form-item">
+          <ion-label position="stacked">
+            Investigation Findings & Response *
+            <small class="char-count">({{ form.get('admin_response')?.value?.length || 0 }}/2000)</small>
+          </ion-label>
+          <ion-textarea
+            formControlName="admin_response"
+            placeholder="Provide your investigation findings, actions taken, and response to the reporter"
+            rows="6">
+          </ion-textarea>
+          <ion-note slot="end" *ngIf="form.get('admin_response')?.hasError('minlength')" color="danger">
+            Minimum 10 characters required
+          </ion-note>
+        </ion-item>
+
+        <!-- Action Taken -->
+        <ion-item lines="none" class="form-item">
+          <ion-label position="stacked">Action Taken</ion-label>
+          <ion-select formControlName="action_taken" placeholder="Select action">
+            <ion-select-option *ngFor="let option of actionOptions" [value]="option.value">
+              {{ option.label }}
+            </ion-select-option>
+          </ion-select>
+        </ion-item>
+
+        <!-- Action Description -->
+        <div *ngIf="form.get('action_taken')?.value !== 'none'" class="action-info">
+          <ion-icon name="information-circle-outline"></ion-icon>
+          <p *ngIf="form.get('action_taken')?.value === 'warning'">
+            This karenderia will receive a warning. Repeated issues may lead to suspension.
+          </p>
+          <p *ngIf="form.get('action_taken')?.value === 'suspension'">
+            This karenderia will be suspended. They must resolve the issue before reactivation.
+          </p>
+          <p *ngIf="form.get('action_taken')?.value === 'permanent_closure'">
+            This karenderia will be permanently closed and removed from the platform.
+          </p>
+        </div>
+      </ion-card-content>
+    </ion-card>
+  </form>
+</ion-content>
+
+<ion-footer>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button color="medium" (click)="closeModal()">
+        Cancel
+      </ion-button>
+    </ion-buttons>
+    <ion-buttons slot="end">
+      <ion-button 
+        color="primary" 
+        [disabled]="form.invalid || isSubmitting"
+        (click)="submitInvestigation()">
+        <ion-spinner *ngIf="isSubmitting" name="circular"></ion-spinner>
+        <span *ngIf="!isSubmitting">Submit Investigation</span>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-footer>

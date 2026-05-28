@@ -60,6 +60,25 @@ export interface AdminReportResponse {
   };
 }
 
+export interface PendingReview {
+  id: number;
+  karenderia_id: number;
+  rating: number;
+  comment: string;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+  updated_at: string;
+  karenderia?: {
+    id: number;
+    business_name: string;
+  };
+  reviewer?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -168,5 +187,35 @@ export class AdminService {
     return this.http.delete(`${this.apiUrl}/admin/users/${userId}`, {
       headers: this.getAuthHeaders()
     });
+  }
+
+  // Investigate and respond to a karenderia report
+  investigateReport(reportId: number, investigationData: {
+    status: 'new' | 'under_review' | 'acknowledged' | 'resolved' | 'rejected';
+    admin_response: string;
+    verified?: boolean;
+    action_taken?: 'none' | 'warning' | 'suspension' | 'permanent_closure';
+  }): Observable<any> {
+    return this.http.post(
+      `${this.apiUrl}/admin/reports/${reportId}/investigate`,
+      investigationData,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  // Get pending customer reviews (awaiting approval)
+  getPendingReviews(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/admin/reports/pending-reviews`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  // Approve or reject a customer review
+  moderateReview(reviewId: number, action: 'approve' | 'reject', moderation_note?: string): Observable<any> {
+    return this.http.patch(
+      `${this.apiUrl}/admin/reviews/${reviewId}/moderate`,
+      { action, moderation_note },
+      { headers: this.getAuthHeaders() }
+    );
   }
 }

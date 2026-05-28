@@ -24,7 +24,7 @@ export class MealsBrowsePage implements OnInit, OnDestroy {
   currentFilters: MealFilterOptions = {};
   filterStats: FilterStats | null = null;
   activeAllergens: string[] = [];
-  avoidRiskyDishes = true;
+  avoidRiskyDishes = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -46,9 +46,9 @@ export class MealsBrowsePage implements OnInit, OnDestroy {
     const effectiveAllergens = this.allergenDetectionService.getEffectiveUserAllergens();
     this.activeAllergens = effectiveAllergens.map(allergen => allergen.name);
 
-    // DON'T auto-apply allergen filters
-    // Let users see all meals and manually enable safety filters if desired
-    // This way they can browse meals and choose to enable allergen filtering
+    // Default: Don't filter - let users see all meals first
+    // They can enable safety filter if they want
+    this.avoidRiskyDishes = false;
     this.currentFilters.allergenSafe = false;
     this.currentFilters.specificAllergens = [];
   }

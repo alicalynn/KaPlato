@@ -91,8 +91,19 @@ export class ReportIssueModalComponent implements OnInit {
   }
 
   async submitReport() {
-    if (this.form.invalid) {
-      this.showToast('Please fill in all required fields', 'warning');
+    // Detailed validation
+    const errors: string[] = [];
+
+    if (!this.form.value.report_type) {
+      errors.push('Please select a report type');
+    }
+
+    if (!this.form.value.description || this.form.value.description.trim().length < 10) {
+      errors.push('Description must be at least 10 characters');
+    }
+
+    if (errors.length > 0) {
+      this.showToast(errors.join(' • '), 'warning');
       return;
     }
 
@@ -117,20 +128,46 @@ export class ReportIssueModalComponent implements OnInit {
 
       // Since FormData is involved, we need to make a direct HTTP call
       // The service will handle this appropriately
-      await this.reviewService.reportIssue(this.karenderiaId, formData).toPromise();
+      const response: any = await this.reviewService.reportIssue(this.karenderiaId, formData).toPromise();
+      
+      console.log('Report submitted successfully:', response);
 
       await loading.dismiss();
       this.showToast('Report submitted successfully. Our team will review it.', 'success');
       
-      await this.modalController.dismiss({
-        submitted: true
-      });
+      // Close modal after brief delay to ensure user sees success message
+      setTimeout(() => {
+        this.modalController.dismiss({
+          submitted: true
+        });
+      }, 500);
+
     } catch (error: any) {
       await loading.dismiss();
       console.error('Error submitting report:', error);
-      const errorMessage = error?.error?.error || 'Failed to submit report';
+      
+      // Handle validation errors from server
+      let errorMessage = 'Failed to submit report';
+      
+      // Check if this is a validation error (422)
+      if (error?.status === 422) {
+        if (error?.error?.errors) {
+          // Laravel validation errors
+          const fieldErrors = error.error.errors;
+          const errorMessages = Object.values(fieldErrors).flat() as string[];
+          errorMessage = errorMessages.join('\n');
+        } else if (error?.error?.error) {
+          errorMessage = error.error.error;
+        }
+      } else if (error?.error?.error) {
+        errorMessage = error.error.error;
+      } else if (error?.error?.message) {
+        errorMessage = error.error.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
       this.showToast(errorMessage, 'danger');
-    } finally {
       this.isSaving = false;
     }
   }

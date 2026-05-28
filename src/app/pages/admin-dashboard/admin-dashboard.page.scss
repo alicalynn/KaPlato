@@ -953,3 +953,77 @@
     }
   }
 }
+
+// Review Card Specific Styles
+.modern-application-card.review-card {
+  border-left: 4px solid #fbbf24;
+  
+  .review-avatar {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  }
+
+  .review-rating-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 0;
+    padding: 12px;
+    background: rgba(251, 191, 36, 0.1);
+    border-radius: 8px;
+
+    .stars-display {
+      display: flex;
+      gap: 4px;
+
+      .star {
+        font-size: 1.2rem;
+        color: #d1d5db;
+
+        &.filled {
+          color: #fbbf24;
+        }
+
+        ion-icon {
+          display: inline-block;
+        }
+      }
+    }
+
+    .rating-text {
+      font-weight: 600;
+      color: #f59e0b;
+      font-size: 0.9rem;
+    }
+  }
+
+  .review-comment {
+    margin: 12px 0;
+    padding: 12px;
+    background: rgba(107, 114, 128, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid #fbbf24;
+
+    h4 {
+      margin: 0 0 8px 0;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: #374151;
+    }
+  }
+
+  .review-meta {
+    display: block;
+    margin: 8px 0;
+    color: #9ca3af;
+    font-size: 0.8rem;
+  }
+}

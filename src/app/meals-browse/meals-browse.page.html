@@ -58,12 +58,23 @@
 
   <!-- Results Summary -->
   <div *ngIf="!isLoading && filterStats" class="results-summary">
-    <ion-item lines="none" *ngIf="hasActiveAllergens()">
+    <ion-item lines="none" *ngIf="hasActiveAllergens()" class="allergen-toggle-row">
       <ion-label>
         Avoid dishes with: {{ activeAllergens.join(', ') }}
       </ion-label>
       <ion-toggle [checked]="avoidRiskyDishes" (ionChange)="toggleAvoidRiskyDishes($event.detail.checked)"></ion-toggle>
     </ion-item>
+
+    <!-- Allergen Filter Status Message -->
+    <div *ngIf="hasActiveAllergens() && avoidRiskyDishes" class="allergen-filter-status">
+      <ion-item lines="none" class="filter-active">
+        <ion-icon name="shield-checkmark" slot="start" color="success"></ion-icon>
+        <ion-label>
+          <p><strong>✓ Allergen Safe Mode ON</strong></p>
+          <p class="status-text">Showing only meals safe for your allergies</p>
+        </ion-label>
+      </ion-item>
+    </div>
 
     <div class="summary-stats">
       <div class="stat-item">
@@ -151,11 +162,11 @@
             </div>
           </div>
 
-          <!-- Allergen warnings -->
-          <div class="allergen-warnings" *ngIf="meal.allergens && meal.allergens.length > 0">
+          <!-- Allergen warnings - ONLY show when toggle is OFF -->
+          <div class="allergen-warnings" *ngIf="!avoidRiskyDishes && meal.allergens && meal.allergens.length > 0">
             <div class="warning-label">
               <ion-icon name="warning-outline" color="warning"></ion-icon>
-              <span>Contains:</span>
+              <span>⚠️ Contains:</span>
             </div>
             <div class="allergen-chips">
               <ion-chip 

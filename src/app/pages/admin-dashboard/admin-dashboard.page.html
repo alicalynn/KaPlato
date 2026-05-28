@@ -668,9 +668,13 @@
               </div>
 
               <div class="user-actions-grid">
+                <ion-button size="small" fill="solid" color="primary" (click)="investigateReport(report)">
+                  <ion-icon name="shield-checkmark" slot="start"></ion-icon>
+                  Investigate
+                </ion-button>
                 <ion-button size="small" fill="outline" color="medium" disabled>
                   <ion-icon name="eye" slot="start"></ion-icon>
-                  Review Only
+                  View History
                 </ion-button>
               </div>
             </ion-card-content>

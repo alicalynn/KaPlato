@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { IonicModule, AlertController, ToastController } from '@ionic/angular';
+import { IonicModule, AlertController, ToastController, ModalController } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import { 
   logOutOutline, shieldCheckmark, analyticsOutline, documentTextOutline,
@@ -13,12 +13,13 @@ import {
   businessOutline, refreshOutline, callOutline, calendarOutline,
   mailOutline, banOutline, swapHorizontalOutline, trashOutline,
   checkmarkOutline, mapOutline, people, business, warningOutline,
-  alertCircleOutline, pricetagOutline
+  alertCircleOutline, pricetagOutline, star, close
 } from 'ionicons/icons';
 
 import { AuthService, User } from '../../services/auth.service';
 import { AdminService } from '../../services/admin.service';
 import { LoggerService } from '../../services/logger.service';
+import { ReportInvestigationModalPage } from './report-investigation-modal/report-investigation-modal.page';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -30,7 +31,8 @@ import { LoggerService } from '../../services/logger.service';
     FormsModule,
     CommonModule, 
     FormsModule, 
-    IonicModule
+    IonicModule,
+    ReportInvestigationModalPage
   ]
 })
 export class AdminDashboardPage implements OnInit, OnDestroy {
@@ -44,6 +46,7 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
   customers: any[] = [];
   karenderiaOwners: any[] = [];
   reports: any[] = [];
+  pendingReviews: any[] = [];
   
   private timeInterval: any;
 
@@ -53,7 +56,8 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
     private logger: LoggerService,
     private router: Router,
     private alertCtrl: AlertController,
-    private toastCtrl: ToastController
+    private toastCtrl: ToastController,
+    private modalController: ModalController
   ) {
     addIcons({
       logOutOutline,
@@ -93,7 +97,9 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
       business,
       warningOutline,
       alertCircleOutline,
-      pricetagOutline
+      pricetagOutline,
+      star,
+      close
     });
   }
 
@@ -138,6 +144,9 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
         break;
       case 'reports':
         this.loadReports();
+        break;
+      case 'reviews':
+        this.loadPendingReviews();
         break;
     }
   }
@@ -200,6 +209,103 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
         this.showToast('Error loading reports', 'danger');
       }
     });
+  }
+
+  loadPendingReviews() {
+    this.adminService.getPendingReviews().subscribe({
+      next: (response) => {
+        this.pendingReviews = response.data?.data || response.data || [];
+      },
+      error: (error) => {
+        console.error('Error loading pending reviews:', error);
+        this.showToast('Error loading pending reviews', 'danger');
+      }
+    });
+  }
+
+  async approveReview(review: any) {
+    const alert = await this.alertCtrl.create({
+      header: 'Approve Review',
+      message: `Approve this ${review.rating}-star review from ${review.reviewer?.name}?`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Approve',
+          handler: () => {
+            this.adminService.moderateReview(review.id, 'approve').subscribe({
+              next: () => {
+                this.showToast('Review approved successfully', 'success');
+                this.loadPendingReviews();
+              },
+              error: (error) => {
+                console.error('Error approving review:', error);
+                this.showToast('Error approving review', 'danger');
+              }
+            });
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  async rejectReview(review: any) {
+    const alert = await this.alertCtrl.create({
+      header: 'Reject Review',
+      message: `Reject this ${review.rating}-star review from ${review.reviewer?.name}?`,
+      inputs: [
+        {
+          name: 'moderation_note',
+          type: 'textarea',
+          placeholder: 'Reason for rejection (optional)',
+          value: ''
+        }
+      ],
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Reject',
+          handler: (data) => {
+            this.adminService.moderateReview(review.id, 'reject', data.moderation_note).subscribe({
+              next: () => {
+                this.showToast('Review rejected successfully', 'success');
+                this.loadPendingReviews();
+              },
+              error: (error) => {
+                console.error('Error rejecting review:', error);
+                this.showToast('Error rejecting review', 'danger');
+              }
+            });
+          }
+        }
+      ]
+    });
+    await alert.present();
+  }
+
+  async investigateReport(report: any) {
+    const modal = await this.modalController.create({
+      component: ReportInvestigationModalPage,
+      componentProps: {
+        report: report
+      },
+      cssClass: 'investigation-modal',
+      backdropDismiss: false
+    });
+
+    await modal.present();
+    const { data } = await modal.onDidDismiss();
+
+    if (data?.success) {
+      this.loadReports();
+      this.loadDashboardData();
+    }
   }
 
   async quickApprove(karenderiaId: number) {
