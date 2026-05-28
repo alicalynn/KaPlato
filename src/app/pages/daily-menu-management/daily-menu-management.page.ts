@@ -216,8 +216,8 @@ export class DailyMenuManagementPage implements OnInit {
               return false;
             }
 
-            const specialPrice = data.specialPrice ? parseFloat(data.specialPrice) : undefined;
-            const notes = data.notes || undefined;
+            const specialPrice = this.parseOptionalNumber(data.specialPrice);
+            const notes = this.parseOptionalText(data.notes);
 
             for (const menuItemId of menuItemIds) {
               await this.addMenuItemToDailyMenu({
@@ -245,13 +245,15 @@ export class DailyMenuManagementPage implements OnInit {
     await loading.present();
 
     try {
+      const specialPrice = this.parseOptionalNumber(data.specialPrice);
+      const notes = this.parseOptionalText(data.notes);
       const request: CreateDailyMenuRequest = {
         menu_item_id: parseInt(data.menuItemId),
         date: this.selectedDate,
         meal_type: this.selectedMealType,
         quantity: parseInt(data.quantity),
-        special_price: data.specialPrice ? parseFloat(data.specialPrice) : undefined,
-        notes: data.notes || undefined
+        special_price: specialPrice,
+        notes
       };
 
       const response = await this.dailyMenuService.addToDailyMenu(request).toPromise();
@@ -379,6 +381,22 @@ export class DailyMenuManagementPage implements OnInit {
       position: 'top'
     });
     toast.present();
+  }
+
+  private parseOptionalNumber(value: any): number | undefined {
+    if (value === null || value === undefined || value === '') {
+      return undefined;
+    }
+    const parsed = parseFloat(String(value).trim());
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+
+  private parseOptionalText(value: any): string | undefined {
+    if (value === null || value === undefined) {
+      return undefined;
+    }
+    const normalized = String(value).trim();
+    return normalized.length > 0 ? normalized : undefined;
   }
 
   getPrice(item: DailyMenuItem): number {

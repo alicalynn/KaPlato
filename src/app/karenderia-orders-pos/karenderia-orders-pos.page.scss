@@ -61,7 +61,7 @@
     gap: 8px;
     
     ion-button {
-      --color: #94a3b8;
+      --color: var(--app-button-text-color);
       --padding-start: 8px;
       --padding-end: 8px;
       
@@ -140,7 +140,7 @@
     gap: 8px;
     
     ion-button {
-      --color: #94a3b8;
+      --color: var(--app-button-text-color);
       --padding-start: 8px;
       --padding-end: 8px;
       
@@ -425,10 +425,13 @@
   
   .menu-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(220px, 260px));
+    justify-content: start;
+    justify-items: stretch;
     gap: 16px;
     
     .menu-item-card {
+      width: 100%;
       background: white;
       border: 1px solid #e5e7eb;
       border-radius: 12px;
@@ -443,13 +446,18 @@
       }
       
       .item-image {
-        height: 120px;
+        width: 100%;
+        height: 150px;
+        aspect-ratio: 4 / 3;
         overflow: hidden;
+        background: #f3f4f6;
         
         img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
+          object-position: center !important;
+          display: block;
         }
       }
       
@@ -541,6 +549,7 @@
     flex: 1;
     padding: 16px 24px;
     overflow-y: auto;
+    overflow-x: hidden;
     
     .empty-order {
       text-align: center;
@@ -564,6 +573,8 @@
       gap: 12px;
       padding: 12px 0;
       border-bottom: 1px solid #f3f4f6;
+      width: 100%;
+      min-width: 0;
       
       .item-image-small {
         width: 48px;
@@ -581,12 +592,16 @@
       
       .item-details {
         flex: 1;
+        min-width: 0;
         
         h4 {
           margin: 0 0 4px 0;
           font-size: 14px;
           font-weight: 600;
           color: #111827;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
         
         p {
@@ -600,7 +615,8 @@
       .quantity-controls {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
+        flex-shrink: 0;
         
         button {
           width: 32px;
@@ -621,6 +637,8 @@
           
           &.remove-btn {
             color: #ef4444;
+            border-color: #fca5a5;
+            background: #fef2f2;
             
             &:hover {
               border-color: #ef4444;
@@ -647,26 +665,12 @@
     border-top: 1px solid #e5e7eb;
     border-bottom: 1px solid #e5e7eb;
     
-    .summary-line {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 8px;
-      font-size: 14px;
-      
-      &:last-child {
-        margin-bottom: 0;
-      }
-    }
-    
     .summary-total {
       display: flex;
       justify-content: space-between;
       font-size: 18px;
       font-weight: 700;
       color: #f97316;
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px solid #e5e7eb;
     }
   }
   

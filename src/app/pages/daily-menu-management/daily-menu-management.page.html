@@ -1,276 +1,186 @@
 <app-owner-shell activePage="daily-menu" sectionLabel="Kitchen">
 <ion-header [translucent]="true">
-  <ion-toolbar class="senior-friendly-toolbar">
-    <ion-title class="large-title">
-      <div class="header-title-large">
-        <ion-icon name="calendar" class="large-header-icon"></ion-icon>
-        <span class="title-text">Daily Menu</span>
+  <ion-toolbar class="daily-menu-toolbar">
+    <ion-title>
+      <div class="toolbar-title">
+        <ion-icon name="calendar" class="toolbar-icon"></ion-icon>
+        <span>Daily Menu</span>
       </div>
     </ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true" class="senior-daily-menu-content">
-  
-  <!-- Simplified Date and Meal Selection -->
-  <div class="senior-selection-section">
-    
-    <!-- Simple Date Navigation -->
-    <div class="large-date-section">
-      <h2 class="section-title">
-        <ion-icon name="calendar-outline" class="section-icon"></ion-icon>
-        Daily Menu Date
-      </h2>
-      
-      <!-- Date Navigation Controls -->
-      <div class="date-navigation-container">
-        <!-- Previous Day Arrow -->
-        <ion-button 
-          fill="clear" 
-          color="medium" 
-          size="large"
-          class="nav-arrow-btn"
-          (click)="goToPreviousDay()"
-          [disabled]="isPreviousDayDisabled()">
-          <ion-icon name="chevron-back-outline" size="large"></ion-icon>
-        </ion-button>
-        
-        <!-- Current Date Display -->
-        <div class="current-date-display">
-          <div class="date-type-label">{{ getDateLabel() }}</div>
-          <div class="date-main-text">{{ getFormattedDate() }}</div>
+<ion-content [fullscreen]="true" class="daily-menu-content">
+  <div class="daily-menu-page">
+
+    <!-- Controls: date + meal in one panel -->
+    <section class="control-panel">
+      <div class="control-panel__date">
+        <label class="control-label">Date</label>
+        <div class="date-nav">
+          <button
+            type="button"
+            class="date-nav__arrow"
+            (click)="goToPreviousDay()"
+            [disabled]="isPreviousDayDisabled()"
+            aria-label="Previous day">
+            <ion-icon name="chevron-back"></ion-icon>
+          </button>
+
+          <button type="button" class="date-nav__display" (click)="openSimpleDatePicker()">
+            <span class="date-nav__badge" *ngIf="isToday()">Today</span>
+            <span class="date-nav__badge date-nav__badge--other" *ngIf="!isToday()">{{ getDateLabel() }}</span>
+            <span class="date-nav__text">{{ getFormattedDate() }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="date-nav__arrow"
+            (click)="goToNextDay()"
+            aria-label="Next day">
+            <ion-icon name="chevron-forward"></ion-icon>
+          </button>
         </div>
-        
-        <!-- Next Day Arrow -->
-        <ion-button 
-          fill="clear" 
-          color="medium" 
-          size="large"
-          class="nav-arrow-btn"
-          (click)="goToNextDay()">
-          <ion-icon name="chevron-forward-outline" size="large"></ion-icon>
-        </ion-button>
-      </div>
-      
-      <!-- Quick Action Buttons -->
-      <div class="date-quick-actions">
-        <ion-button 
-          fill="solid" 
-          color="success" 
-          size="large"
-          class="quick-action-btn"
+
+        <button
+          type="button"
+          class="today-link"
           (click)="selectToday()"
           [disabled]="isToday()">
-          <ion-icon name="sunny-outline" slot="start"></ion-icon>
-          Today's Date
-        </ion-button>
-        
-        <ion-button 
-          fill="outline" 
-          color="primary" 
-          size="large"
-          class="quick-action-btn"
-          (click)="openSimpleDatePicker()">
-          <ion-icon name="calendar-outline" slot="start"></ion-icon>
-          Select Date
-        </ion-button>
+          <ion-icon name="today-outline"></ion-icon>
+          Jump to today
+        </button>
       </div>
-    </div>
 
-    <!-- Large Meal Type Selection -->
-    <div class="large-meal-section">
-      <h2 class="section-title">
-        <ion-icon name="restaurant-outline" class="section-icon"></ion-icon>
-        Select Meal Time
-      </h2>
-      <div class="large-meal-buttons">
-        <ion-button 
-          *ngFor="let mealType of mealTypes" 
-          class="large-meal-btn"
-          [class.selected-meal]="selectedMealType === mealType.value"
-          (click)="selectMealType(mealType.value)"
-          expand="block"
-          size="large">
-          <ion-icon [name]="mealType.icon" slot="start" class="meal-icon"></ion-icon>
-          <span class="meal-text">{{ mealType.label }}</span>
-        </ion-button>
-      </div>
-    </div>
-  </div>
+      <div class="control-panel__divider" aria-hidden="true"></div>
 
-  <!-- Large Add Button Section -->
-  <div class="large-add-section">
-    <ion-button 
-      expand="block" 
-      (click)="showMenuItemSelector()"
-      class="large-add-btn"
-      size="large">
-      <ion-icon name="add-circle" slot="start" class="add-icon"></ion-icon>
-      <span class="add-text">Add Food to {{ getCurrentMealTypeLabel() }}</span>
-    </ion-button>
-  </div>
-
-  <!-- Loading State -->
-  <div *ngIf="isLoading" class="large-loading-container">
-    <ion-spinner name="crescent" class="large-spinner"></ion-spinner>
-    <p class="loading-text">Loading your menu...</p>
-  </div>
-
-  <!-- Daily Menu Items - Senior Friendly -->
-  <div *ngIf="!isLoading" class="senior-menu-items">
-    
-    <!-- Empty State -->
-    <div *ngIf="dailyMenuItems.length === 0" class="large-empty-state">
-      <ion-icon name="restaurant" class="large-empty-icon"></ion-icon>
-      <h2 class="empty-title">No Food Items Yet</h2>
-      <p class="empty-description">
-        Add food items for {{ getCurrentMealTypeLabel() }}<br>
-        on {{ selectedDate | date:'fullDate' }}
-      </p>
-    </div>
-
-    <!-- Menu Item Cards - Large and Clear -->
-    <div class="senior-menu-cards">
-      <ion-card *ngFor="let item of dailyMenuItems" class="senior-menu-card">
-        <ion-card-header class="senior-card-header">
-          <div class="food-title-section">
-            <h2 class="food-name">{{ item.menu_item?.name }}</h2>
-            <p class="food-description">{{ item.menu_item?.description }}</p>
-          </div>
-          
-          <!-- Large Status Badge -->
-          <div class="large-status-section">
-            <div 
-              class="large-status-badge"
-              [class.status-available]="item.is_available && item.quantity > 0"
-              [class.status-unavailable]="!item.is_available"
-              [class.status-sold-out]="item.is_available && item.quantity === 0">
-              <ion-icon 
-                [name]="item.is_available ? (item.quantity > 0 ? 'checkmark-circle' : 'alert-circle') : 'close-circle'"
-                class="status-icon">
-              </ion-icon>
-              <span class="status-text">
-                {{ item.is_available ? (item.quantity > 0 ? 'AVAILABLE' : 'SOLD OUT') : 'NOT AVAILABLE' }}
-              </span>
-            </div>
-          </div>
-        </ion-card-header>
-
-        <ion-card-content class="senior-card-content">
-          <!-- Large Info Display -->
-          <div class="large-info-grid">
-            
-            <!-- Servings Info -->
-            <div class="info-item">
-              <div class="info-icon-section">
-                <ion-icon name="restaurant" class="info-icon"></ion-icon>
-              </div>
-              <div class="info-text-section">
-                <span class="info-label">Servings Available</span>
-                <span class="info-value">{{ item.quantity }} of {{ item.original_quantity }}</span>
-              </div>
-              <div class="info-action-section">
-                <ion-button 
-                  fill="solid" 
-                  color="tertiary"
-                  (click)="updateQuantity(item)"
-                  class="large-action-btn">
-                  <ion-icon name="create" slot="start"></ion-icon>
-                  <span>Edit</span>
-                </ion-button>
-              </div>
-            </div>
-
-            <!-- Price Info -->
-            <div class="info-item">
-              <div class="info-icon-section">
-                <ion-icon name="pricetag" class="info-icon"></ion-icon>
-              </div>
-              <div class="info-text-section">
-                <span class="info-label">Price per Serving</span>
-                <span class="info-value">₱{{ getPrice(item) }}</span>
-                <span class="price-type" *ngIf="hasSpecialPrice(item)">Special Price</span>
-                <span class="price-type" *ngIf="!hasSpecialPrice(item)">Regular Price</span>
-              </div>
-            </div>
-
-            <!-- Notes (if any) -->
-            <div *ngIf="item.notes" class="info-item">
-              <div class="info-icon-section">
-                <ion-icon name="document-text" class="info-icon"></ion-icon>
-              </div>
-              <div class="info-text-section">
-                <span class="info-label">Special Notes</span>
-                <span class="info-value">{{ item.notes }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Large Action Buttons -->
-          <div class="large-action-buttons">
-            <ion-button 
-              expand="block"
-              (click)="toggleAvailability(item)"
-              [color]="item.is_available ? 'warning' : 'success'"
-              class="large-toggle-btn"
-              size="large">
-              <ion-icon 
-                [name]="item.is_available ? 'pause-circle' : 'play-circle'" 
-                slot="start" 
-                class="action-icon">
-              </ion-icon>
-              <span class="action-text">
-                {{ item.is_available ? 'Mark Not Available' : 'Mark Available' }}
-              </span>
-            </ion-button>
-
-            <ion-button 
-              expand="block"
-              color="danger"
-              (click)="removeItem(item)"
-              class="large-remove-btn"
-              size="large">
-              <ion-icon name="trash" slot="start" class="action-icon"></ion-icon>
-              <span class="action-text">Remove Item</span>
-            </ion-button>
-          </div>
-
-        </ion-card-content>
-      </ion-card>
-    </div>
-  </div>
-
-  <!-- Large Summary Section -->
-  <div *ngIf="dailyMenuItems.length > 0" class="large-summary-section">
-    <ion-card class="senior-summary-card">
-      <ion-card-header class="summary-header">
-        <h2 class="summary-title">
-          <ion-icon name="analytics" class="summary-icon"></ion-icon>
-          Daily Summary
-        </h2>
-      </ion-card-header>
-      <ion-card-content class="summary-content">
-        <div class="large-summary-grid">
-          
-          <div class="summary-item">
-            <div class="summary-number">{{ dailyMenuItems.length }}</div>
-            <div class="summary-label">Total Food Items</div>
-          </div>
-          
-          <div class="summary-item available">
-            <div class="summary-number">{{ getAvailableItemsCount() }}</div>
-            <div class="summary-label">Available Items</div>
-          </div>
-          
-          <div class="summary-item servings">
-            <div class="summary-number">{{ getTotalQuantity() }}</div>
-            <div class="summary-label">Total Servings</div>
-          </div>
-          
+      <div class="control-panel__meal">
+        <label class="control-label">Meal</label>
+        <div class="meal-segments" role="tablist" aria-label="Meal time">
+          <button
+            *ngFor="let mealType of mealTypes"
+            type="button"
+            role="tab"
+            class="meal-segment"
+            [class.meal-segment--active]="selectedMealType === mealType.value"
+            [attr.aria-selected]="selectedMealType === mealType.value"
+            (click)="selectMealType(mealType.value)">
+            <ion-icon [name]="mealType.icon"></ion-icon>
+            <span>{{ mealType.label }}</span>
+          </button>
         </div>
-      </ion-card-content>
-    </ion-card>
-  </div>
+      </div>
+    </section>
 
+    <!-- Menu section header -->
+    <section class="menu-section">
+      <div class="menu-section__header">
+        <div class="menu-section__title">
+          <h2>{{ getCurrentMealTypeLabel() }} menu</h2>
+          <p *ngIf="!isLoading">{{ dailyMenuItems.length }} item{{ dailyMenuItems.length === 1 ? '' : 's' }}</p>
+        </div>
+        <ion-button
+          class="add-btn"
+          (click)="showMenuItemSelector()"
+          [disabled]="isLoading">
+          <ion-icon name="add" slot="start"></ion-icon>
+          Add food
+        </ion-button>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="isLoading" class="state-block state-block--loading">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Loading menu…</p>
+      </div>
+
+      <!-- Empty -->
+      <div *ngIf="!isLoading && dailyMenuItems.length === 0" class="state-block state-block--empty">
+        <div class="empty-icon-wrap">
+          <ion-icon name="restaurant-outline"></ion-icon>
+        </div>
+        <h3>No items for {{ getCurrentMealTypeLabel() | lowercase }}</h3>
+        <p>Add dishes from your menu for {{ selectedDate | date:'mediumDate' }}.</p>
+        <ion-button fill="solid" class="empty-cta" (click)="showMenuItemSelector()">
+          <ion-icon name="add-circle-outline" slot="start"></ion-icon>
+          Add first item
+        </ion-button>
+      </div>
+
+      <!-- Item cards -->
+      <div *ngIf="!isLoading && dailyMenuItems.length > 0" class="menu-cards">
+        <article *ngFor="let item of dailyMenuItems" class="menu-card">
+          <header class="menu-card__header">
+            <div class="menu-card__title">
+              <h3>{{ item.menu_item?.name }}</h3>
+              <p *ngIf="item.menu_item?.description">{{ item.menu_item?.description }}</p>
+            </div>
+            <span
+              class="status-pill"
+              [class.status-pill--available]="item.is_available && item.quantity > 0"
+              [class.status-pill--sold-out]="item.is_available && item.quantity === 0"
+              [class.status-pill--unavailable]="!item.is_available">
+              <ion-icon
+                [name]="item.is_available ? (item.quantity > 0 ? 'checkmark-circle' : 'alert-circle') : 'close-circle'">
+              </ion-icon>
+              {{ item.is_available ? (item.quantity > 0 ? 'Available' : 'Sold out') : 'Unavailable' }}
+            </span>
+          </header>
+
+          <div class="menu-card__body">
+            <div class="detail-row">
+              <div class="detail-row__main">
+                <ion-icon name="restaurant-outline"></ion-icon>
+                <div>
+                  <span class="detail-label">Servings</span>
+                  <span class="detail-value">{{ item.quantity }} / {{ item.original_quantity }}</span>
+                </div>
+              </div>
+              <ion-button fill="outline" size="small" (click)="updateQuantity(item)">
+                <ion-icon name="create-outline" slot="start"></ion-icon>
+                Edit
+              </ion-button>
+            </div>
+
+            <div class="detail-row detail-row--static">
+              <div class="detail-row__main">
+                <ion-icon name="pricetag-outline"></ion-icon>
+                <div>
+                  <span class="detail-label">Price</span>
+                  <span class="detail-value">₱{{ getPrice(item) }}</span>
+                  <span class="detail-hint">{{ hasSpecialPrice(item) ? 'Special price' : 'Regular price' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="item.notes" class="detail-row detail-row--static">
+              <div class="detail-row__main">
+                <ion-icon name="document-text-outline"></ion-icon>
+                <div>
+                  <span class="detail-label">Notes</span>
+                  <span class="detail-value detail-value--notes">{{ item.notes }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <footer class="menu-card__actions">
+            <ion-button
+              fill="outline"
+              [color]="item.is_available ? 'warning' : 'success'"
+              (click)="toggleAvailability(item)">
+              <ion-icon [name]="item.is_available ? 'pause-circle-outline' : 'play-circle-outline'" slot="start"></ion-icon>
+              {{ item.is_available ? 'Mark unavailable' : 'Mark available' }}
+            </ion-button>
+            <ion-button fill="clear" color="danger" (click)="removeItem(item)">
+              <ion-icon name="trash-outline" slot="start"></ion-icon>
+              Remove
+            </ion-button>
+          </footer>
+        </article>
+      </div>
+    </section>
+
+  </div>
 </ion-content>
 </app-owner-shell>
