@@ -202,7 +202,7 @@ interface Message {
                       </div>
                       <div class="detail-row">
                         <span class="label">Items:</span>
-                        <span class="value">{{ order.items?.length || 0 }}</span>
+                        <span class="value">{{ order.items.length || 0 }}</span>
                       </div>
                       <div class="detail-row">
                         <span class="label">Total:</span>

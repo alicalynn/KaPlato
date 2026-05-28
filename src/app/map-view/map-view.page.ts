@@ -1,6 +1,6 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef  } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { ToastController, LoadingController, AlertController } from '@ionic/angular';
+import { ToastController, LoadingController, AlertController, ModalController } from '@ionic/angular';
 import { KarenderiaService } from '../services/karenderia.service';
 import { GestureController } from '@ionic/angular';
 import { Location } from '@angular/common';
@@ -37,6 +37,7 @@ export class MapViewPage implements OnInit, AfterViewInit {
     private toastController: ToastController,
     private loadingController: LoadingController,
     private alertController: AlertController,
+    private modalController: ModalController,
     private karenderiaService: KarenderiaService,
     private gestureCtrl: GestureController,
     private location: Location
@@ -343,5 +344,198 @@ export class MapViewPage implements OnInit, AfterViewInit {
     
     // For now, just show a toast
     this.showToast('Routes cleared');
+  }
+
+  // Get directions for a karenderia - Opens a modal
+  async getDirections(karenderia: any) {
+    console.log('📍 Opening directions modal for:', karenderia.name);
+    
+    const modal = await this.modalController.create({
+      component: DirectionsModalContent,
+      componentProps: {
+        karenderia: karenderia,
+        userLocation: this.userLocation
+      },
+      cssClass: 'directions-modal',
+      breakpoints: [0, 0.5, 1],
+      initialBreakpoint: 0.5
+    });
+
+    await modal.present();
+  }
+}
+
+// Directions Modal Content Component
+@Component({
+  selector: 'app-directions-modal',
+  standalone: false,
+  template: `
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>{{ karenderia?.name }}</ion-title>
+        <ion-buttons slot="end">
+          <ion-button (click)="closeModal()">
+            <ion-icon name="close-outline"></ion-icon>
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+
+    <ion-content>
+      <ion-list>
+        <!-- Karenderia Info -->
+        <ion-item>
+          <ion-label position="stacked">
+            <strong>Address</strong>
+          </ion-label>
+          <ion-text>
+            <p>{{ karenderia?.address }}</p>
+          </ion-text>
+        </ion-item>
+
+        <!-- Distance Info -->
+        <ion-item *ngIf="karenderia?.distance">
+          <ion-label position="stacked">
+            <strong>Distance</strong>
+          </ion-label>
+          <ion-text>
+            <p>{{ karenderia?.distance }}m away</p>
+          </ion-text>
+        </ion-item>
+
+        <!-- Estimated Time -->
+        <ion-item *ngIf="karenderia?.deliveryTime">
+          <ion-label position="stacked">
+            <strong>Estimated Travel Time</strong>
+          </ion-label>
+          <ion-text>
+            <p>{{ karenderia?.deliveryTime }}</p>
+          </ion-text>
+        </ion-item>
+
+        <!-- Coordinates -->
+        <ion-item>
+          <ion-label position="stacked">
+            <strong>Coordinates</strong>
+          </ion-label>
+          <ion-text>
+            <p>Lat: {{ karenderia?.latitude?.toFixed(6) }}</p>
+            <p>Lng: {{ karenderia?.longitude?.toFixed(6) }}</p>
+          </ion-text>
+        </ion-item>
+      </ion-list>
+
+      <!-- Action Buttons -->
+      <div class="directions-actions">
+        <ion-button 
+          expand="block" 
+          fill="solid" 
+          color="primary"
+          (click)="openGoogleMaps()">
+          <ion-icon name="navigate-outline" slot="start"></ion-icon>
+          Open in Google Maps
+        </ion-button>
+
+        <ion-button 
+          expand="block" 
+          fill="outline" 
+          color="primary"
+          (click)="callKarenderia()">
+          <ion-icon name="call-outline" slot="start"></ion-icon>
+          Call Karenderia
+        </ion-button>
+      </div>
+
+      <div class="info-box">
+        <ion-icon name="information-circle"></ion-icon>
+        <p>Tap "Open in Google Maps" to see turn-by-turn directions from your location.</p>
+      </div>
+    </ion-content>
+  `,
+  styles: [`
+    .directions-actions {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .info-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: rgba(66, 165, 245, 0.1);
+      border-radius: 8px;
+      margin: 16px;
+      border-left: 4px solid #42a5f5;
+
+      ion-icon {
+        font-size: 24px;
+        color: #42a5f5;
+        flex-shrink: 0;
+      }
+
+      p {
+        margin: 0;
+        font-size: 14px;
+        color: #1e293b;
+      }
+    }
+
+    ion-list {
+      background: transparent;
+    }
+
+    ion-item {
+      --padding-start: 16px;
+      --padding-end: 16px;
+      margin-bottom: 8px;
+    }
+
+    ion-text {
+      p {
+        margin: 4px 0;
+        font-size: 14px;
+      }
+    }
+  `]
+})
+export class DirectionsModalContent {
+  karenderia: any;
+  userLocation: any;
+
+  constructor(
+    private modalController: ModalController,
+    private toastController: ToastController
+  ) {}
+
+  closeModal() {
+    this.modalController.dismiss();
+  }
+
+  openGoogleMaps() {
+    if (this.karenderia?.latitude && this.karenderia?.longitude) {
+      // Google Maps URL with destination coordinates
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${this.karenderia.latitude},${this.karenderia.longitude}`;
+      window.open(url, '_blank');
+      console.log('📍 Opening Google Maps with directions to:', this.karenderia.name);
+    } else {
+      this.showToast('Location information not available');
+    }
+  }
+
+  callKarenderia() {
+    // Placeholder for call functionality
+    this.showToast('Call feature coming soon!');
+  }
+
+  async showToast(message: string) {
+    const toast = await this.toastController.create({
+      message,
+      duration: 2000,
+      position: 'bottom'
+    });
+    await toast.present();
   }
 }

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
 
-import { MapViewPage } from './map-view.page';
+import { MapViewPage, DirectionsModalContent } from './map-view.page';
 import { ComponentsModule } from '../components/components.module';
 import { RouterModule } from '@angular/router';
 
@@ -22,6 +22,6 @@ const routes = [
     RouterModule.forChild(routes),
     ComponentsModule
   ],
-  declarations: [MapViewPage]
+  declarations: [MapViewPage, DirectionsModalContent]
 })
 export class MapViewPageModule {}
