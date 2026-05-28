@@ -452,12 +452,8 @@ export class KarenderiaOrdersPosPage implements OnInit, OnDestroy {
     return this.currentOrder.reduce((total, item) => total + item.subtotal, 0);
   }
 
-  getVAT() {
-    return this.getSubtotal() * 0.12; // 12% VAT
-  }
-
   getTotal() {
-    return this.getSubtotal() + this.getVAT();
+    return this.getSubtotal();
   }
 
   increaseQuantity(item: any) {

@@ -127,14 +127,6 @@
 
           <!-- Order Summary -->
           <div class="order-summary" *ngIf="currentOrder.length > 0">
-            <div class="summary-line">
-              <span>Subtotal:</span>
-              <span>₱{{ getSubtotal().toFixed(2) }}</span>
-            </div>
-            <div class="summary-line">
-              <span>VAT (12%):</span>
-              <span>₱{{ getVAT().toFixed(2) }}</span>
-            </div>
             <div class="summary-total">
               <span>Total:</span>
               <span>₱{{ getTotal().toFixed(2) }}</span>

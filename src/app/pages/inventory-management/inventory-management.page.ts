@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IonicModule, AlertController, LoadingController, ToastController, ModalController } from '@ionic/angular';
+import { ActivatedRoute } from '@angular/router';
 import {
   InventoryService,
   InventoryItem,
@@ -48,16 +49,18 @@ export class InventoryManagementPage implements OnInit {
     categories: []
   };
   isLoading = false;
-  selectedSegment = 'inventory';
+  selectedSegment: 'inventory' | 'alerts' | 'marketplace' | 'owner-orders' | 'supplier-listings' | 'supplier-orders' = 'inventory';
   filteredItems: InventoryItem[] = [];
   selectedCategory = 'all';
 
   marketplaceListings: SupplierListing[] = [];
+  visibleMarketplaceListings: SupplierListing[] = [];
   supplierListings: SupplierListing[] = [];
   ownerOrders: SupplyOrder[] = [];
   supplierOrders: SupplyOrder[] = [];
   cart: CartItem[] = [];
   marketplaceSearch = '';
+  private marketplaceSearchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
   marketplaceCategory = '';
   marketplaceSukiOnly = false;
   sukiSuppliers: SukiSupplier[] = [];
@@ -73,6 +76,30 @@ export class InventoryManagementPage implements OnInit {
 
   // Message notification tracking
   unreadMessageCountMap = new Map<number, number>();
+  isEditInventoryModalOpen = false;
+  editingInventoryItemId: number | null = null;
+  isRestockModalOpen = false;
+  restockItemId: number | null = null;
+  restockItemName = '';
+  restockUnit = '';
+  restockCurrentStock = 0;
+  restockForm = {
+    quantity: null as number | null,
+    unit_cost: null as number | null,
+  };
+  editInventoryForm = {
+    item_name: '',
+    description: '',
+    category: '',
+    unit: '',
+    current_stock: 0,
+    minimum_stock: 0,
+    maximum_stock: null as number | null,
+    unit_cost: 0,
+    supplier: '',
+    expiry_date: '',
+    notes: '',
+  };
 
   supplierUiPages: SupplierUiPage[] = [
     { page: 'Supplier Listings', purpose: 'Manage inventory listings, pricing, and stock', status: 'In Progress' },
@@ -103,7 +130,8 @@ export class InventoryManagementPage implements OnInit {
     private loadingController: LoadingController,
     private toastController: ToastController,
     private modalController: ModalController,
-    private messagingService: SupplyOrderMessagingService
+    private messagingService: SupplyOrderMessagingService,
+    private route: ActivatedRoute
   ) { }
 
   getBackRoute(): string {
@@ -112,6 +140,7 @@ export class InventoryManagementPage implements OnInit {
 
   ngOnInit() {
     this.checkAuthentication();
+    console.log('[InventoryPage] ngOnInit - userRole:', this.userRole);
 
     if (this.userRole === 'karenderia_owner') {
       this.selectedSegment = 'inventory';
@@ -123,12 +152,18 @@ export class InventoryManagementPage implements OnInit {
     }
 
     if (this.userRole === 'supplier') {
-      this.selectedSegment = 'supplier-listings';
+      const requestedSegment = this.route.snapshot.queryParamMap.get('segment');
+      const validSupplierSegments: Array<typeof this.selectedSegment> = ['supplier-listings', 'supplier-orders'];
+      this.selectedSegment = (requestedSegment && validSupplierSegments.includes(requestedSegment as any))
+        ? (requestedSegment as any)
+        : 'supplier-listings';
+      console.log('[InventoryPage] Supplier mode - selectedSegment:', this.selectedSegment);
       this.loadSupplierListings();
       this.loadSupplierOrders();
       return;
     }
 
+    console.log('[InventoryPage] Invalid role:', this.userRole);
     this.showToast('This page is only available for karenderia owners and suppliers.', 'warning');
   }
 
@@ -170,7 +205,9 @@ export class InventoryManagementPage implements OnInit {
   }
 
   onSegmentChanged(event: any) {
-    this.selectedSegment = event.detail.value;
+    const newSegment = event.detail.value;
+    console.log('[onSegmentChanged] Changing from', this.selectedSegment, 'to', newSegment);
+    this.selectedSegment = newSegment;
 
     if (this.selectedSegment === 'alerts') {
       this.loadAlerts();
@@ -179,8 +216,10 @@ export class InventoryManagementPage implements OnInit {
     } else if (this.selectedSegment === 'owner-orders') {
       this.loadOwnerOrders();
     } else if (this.selectedSegment === 'supplier-listings') {
+      console.log('[onSegmentChanged] Loading supplier listings');
       this.loadSupplierListings();
     } else if (this.selectedSegment === 'supplier-orders') {
+      console.log('[onSegmentChanged] Loading supplier orders');
       this.loadSupplierOrders();
     }
   }
@@ -202,15 +241,17 @@ export class InventoryManagementPage implements OnInit {
     try {
       const response = await this.inventoryService
         .getMarketplaceListings(
-          this.marketplaceSearch || undefined,
+          undefined,
           this.marketplaceCategory || undefined,
           this.marketplaceSukiOnly
         )
         .toPromise();
       this.marketplaceListings = response?.data || [];
+      this.applyMarketplaceFilters();
     } catch (error: any) {
       console.error('Error loading marketplace listings:', error);
       this.showToast('Unable to load supplier marketplace listings', 'danger');
+      this.visibleMarketplaceListings = [];
     }
   }
 
@@ -231,6 +272,41 @@ export class InventoryManagementPage implements OnInit {
   toggleMarketplaceSukiOnly(enabled: boolean) {
     this.marketplaceSukiOnly = enabled;
     this.loadMarketplaceListings();
+  }
+
+  onMarketplaceSearchChange() {
+    if (this.marketplaceSearchDebounceTimer) {
+      clearTimeout(this.marketplaceSearchDebounceTimer);
+    }
+
+    this.marketplaceSearchDebounceTimer = setTimeout(() => {
+      this.applyMarketplaceFilters();
+      this.marketplaceSearchDebounceTimer = null;
+    }, 200);
+  }
+
+  private applyMarketplaceFilters() {
+    const query = this.marketplaceSearch.trim().toLowerCase();
+    if (!query) {
+      this.visibleMarketplaceListings = [...this.marketplaceListings];
+      return;
+    }
+
+    this.visibleMarketplaceListings = this.marketplaceListings.filter((listing) => {
+      const supplierName = listing.supplier?.name?.toLowerCase() || '';
+      const supplierEmail = listing.supplier?.email?.toLowerCase() || '';
+      const category = listing.category?.toLowerCase() || '';
+      const description = listing.description?.toLowerCase() || '';
+      const itemName = listing.item_name?.toLowerCase() || '';
+
+      return (
+        itemName.includes(query) ||
+        category.includes(query) ||
+        description.includes(query) ||
+        supplierName.includes(query) ||
+        supplierEmail.includes(query)
+      );
+    });
   }
 
   isSupplierSuki(listing: SupplierListing): boolean {
@@ -273,7 +349,12 @@ export class InventoryManagementPage implements OnInit {
 
     try {
       const response = await this.inventoryService.getOwnerSupplyOrders().toPromise();
-      this.ownerOrders = response?.data || [];
+      this.ownerOrders = (response?.data || []).sort((a: SupplyOrder, b: SupplyOrder) => {
+        // Sort by most recent first
+        const dateA = new Date(a.created_at).getTime();
+        const dateB = new Date(b.created_at).getTime();
+        return dateB - dateA;
+      });
 
       // Load unread message counts for each order
       for (const order of this.ownerOrders) {
@@ -297,14 +378,17 @@ export class InventoryManagementPage implements OnInit {
 
   async loadSupplierListings() {
     if (this.userRole !== 'supplier') {
+      console.log('[loadSupplierListings] Skipped - not a supplier');
       return;
     }
 
     try {
+      console.log('[loadSupplierListings] Loading...');
       const response = await this.inventoryService.getSupplierListings().toPromise();
       this.supplierListings = response?.data || [];
+      console.log('[loadSupplierListings] Loaded:', this.supplierListings.length, 'listings');
     } catch (error: any) {
-      console.error('Error loading supplier listings:', error);
+      console.error('[loadSupplierListings] Error:', error);
       this.showToast('Unable to load your supplier listings', 'danger');
     }
   }
@@ -361,12 +445,20 @@ export class InventoryManagementPage implements OnInit {
 
   async loadSupplierOrders() {
     if (this.userRole !== 'supplier') {
+      console.log('[loadSupplierOrders] Skipped - not a supplier');
       return;
     }
 
     try {
+      console.log('[loadSupplierOrders] Loading...');
       const response = await this.inventoryService.getSupplierSupplyOrders().toPromise();
-      this.supplierOrders = response?.data || [];
+      this.supplierOrders = (response?.data || []).sort((a: SupplyOrder, b: SupplyOrder) => {
+        // Sort by most recent first
+        const dateA = new Date(a.created_at).getTime();
+        const dateB = new Date(b.created_at).getTime();
+        return dateB - dateA;
+      });
+      console.log('[loadSupplierOrders] Loaded:', this.supplierOrders.length, 'orders');
 
       // Load unread message counts for each order
       for (const order of this.supplierOrders) {
@@ -383,7 +475,7 @@ export class InventoryManagementPage implements OnInit {
         }
       }
     } catch (error: any) {
-      console.error('Error loading supplier orders:', error);
+      console.error('[loadSupplierOrders] Error:', error);
       this.showToast('Unable to load supplier orders', 'danger');
     }
   }
@@ -789,6 +881,8 @@ export class InventoryManagementPage implements OnInit {
 
       this.showToast('Supplier listing created successfully!', 'success');
       await this.loadSupplierListings();
+      // Auto-switch to supplier-listings tab to show newly created item
+      this.selectedSegment = 'supplier-listings';
       return true;
     } catch (error: any) {
       console.error('Error creating supplier listing:', error);
@@ -803,13 +897,13 @@ export class InventoryManagementPage implements OnInit {
     const alert = await this.alertController.create({
       header: 'Edit Supplier Listing',
       inputs: [
-        { name: 'item_name', type: 'text', value: listing.item_name, placeholder: 'Item Name *' },
-        { name: 'description', type: 'textarea', value: listing.description || '', placeholder: 'Description (optional)' },
-        { name: 'category', type: 'text', value: listing.category, placeholder: 'Category *' },
-        { name: 'unit', type: 'text', value: listing.unit, placeholder: 'Unit *' },
-        { name: 'price_per_unit', type: 'number', value: String(listing.price_per_unit), placeholder: 'Price per unit *' },
-        { name: 'available_stock', type: 'number', value: String(listing.available_stock), placeholder: 'Available stock *' },
-        { name: 'minimum_order_quantity', type: 'number', value: String(listing.minimum_order_quantity), placeholder: 'Minimum order quantity' },
+        { name: 'item_name', type: 'text', label: 'Item Name *', value: listing.item_name, placeholder: 'Item Name *' },
+        { name: 'description', type: 'textarea', label: 'Description (optional)', value: listing.description || '', placeholder: 'Description (optional)' },
+        { name: 'category', type: 'text', label: 'Category *', value: listing.category, placeholder: 'Category *' },
+        { name: 'unit', type: 'text', label: 'Unit *', value: listing.unit, placeholder: 'Unit *' },
+        { name: 'price_per_unit', type: 'number', label: 'Price per Unit *', value: String(listing.price_per_unit), placeholder: 'Price per unit *' },
+        { name: 'available_stock', type: 'number', label: 'Available Stock *', value: String(listing.available_stock), placeholder: 'Available stock *' },
+        { name: 'minimum_order_quantity', type: 'number', label: 'Minimum Order Quantity', value: String(listing.minimum_order_quantity), placeholder: 'Minimum order quantity' },
       ],
       buttons: [
         { text: 'Cancel', role: 'cancel' },
@@ -947,41 +1041,35 @@ export class InventoryManagementPage implements OnInit {
   }
 
   async restockItem(item: InventoryItem) {
-    const alert = await this.alertController.create({
-      header: `Restock ${item.item_name}`,
-      message: `Current stock: ${item.current_stock} ${item.unit}`,
-      inputs: [
-        {
-          name: 'quantity',
-          type: 'number',
-          placeholder: 'Quantity to add',
-          attributes: { required: true, min: 0.001, step: 0.001 }
-        },
-        {
-          name: 'unit_cost',
-          type: 'number',
-          placeholder: `Unit Cost (Current: ₱${item.unit_cost})`,
-          value: (item.unit_cost?.toString() || '0'),
-          attributes: { min: 0, step: 0.01 }
-        }
-      ],
-      buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel'
-        },
-        {
-          text: 'Restock',
-          handler: async (data) => {
-            if (data.quantity && parseFloat(data.quantity) > 0) {
-              await this.performRestock(item.id, parseFloat(data.quantity), parseFloat(data.unit_cost));
-            }
-          }
-        }
-      ]
-    });
+    this.restockItemId = item.id;
+    this.restockItemName = item.item_name;
+    this.restockUnit = item.unit;
+    this.restockCurrentStock = Number(item.current_stock || 0);
+    this.restockForm = {
+      quantity: null,
+      unit_cost: Number(item.unit_cost || 0),
+    };
+    this.isRestockModalOpen = true;
+  }
 
-    await alert.present();
+  closeRestockModal() {
+    this.isRestockModalOpen = false;
+    this.restockItemId = null;
+  }
+
+  async submitRestockModal() {
+    if (!this.restockItemId) {
+      return;
+    }
+    const quantity = Number(this.restockForm.quantity);
+    const unitCost = Number(this.restockForm.unit_cost);
+    if (!quantity || quantity <= 0) {
+      this.showToast('Please enter a valid quantity to add', 'warning');
+      return;
+    }
+
+    await this.performRestock(this.restockItemId, quantity, unitCost);
+    this.closeRestockModal();
   }
 
   async performRestock(itemId: number, quantity: number, unitCost: number) {
@@ -1197,115 +1285,40 @@ export class InventoryManagementPage implements OnInit {
   }
 
   async editItem(item: InventoryItem) {
-    const alert = await this.alertController.create({
-      header: 'Edit Inventory Item',
-      subHeader: `Update details for "${item.item_name}"`,
-      inputs: [
-        {
-          name: 'item_name',
-          type: 'text',
-          placeholder: 'Item Name *',
-          value: item.item_name,
-          attributes: {
-            required: true
-          }
-        },
-        {
-          name: 'description',
-          type: 'textarea',
-          placeholder: 'Description',
-          value: item.description || ''
-        },
-        {
-          name: 'category',
-          type: 'text',
-          placeholder: 'Category *',
-          value: item.category,
-          attributes: {
-            required: true
-          }
-        },
-        {
-          name: 'unit',
-          type: 'text',
-          placeholder: 'Unit *',
-          value: item.unit,
-          attributes: {
-            required: true
-          }
-        },
-        {
-          name: 'current_stock',
-          type: 'number',
-          placeholder: 'Current Stock *',
-          value: (item.current_stock?.toString() || '0'),
-          min: 0,
-          attributes: {
-            required: true
-          }
-        },
-        {
-          name: 'minimum_stock',
-          type: 'number',
-          placeholder: 'Minimum Stock Level *',
-          value: (item.minimum_stock?.toString() || '0'),
-          min: 0,
-          attributes: {
-            required: true
-          }
-        },
-        {
-          name: 'maximum_stock',
-          type: 'number',
-          placeholder: 'Maximum Stock Level',
-          value: item.maximum_stock?.toString() || '',
-          min: 0
-        },
-        {
-          name: 'unit_cost',
-          type: 'number',
-          placeholder: 'Cost per Unit *',
-          value: (item.unit_cost?.toString() || '0'),
-          min: 0,
-          attributes: {
-            required: true,
-            step: '0.01'
-          }
-        },
-        {
-          name: 'supplier',
-          type: 'text',
-          placeholder: 'Supplier',
-          value: item.supplier || ''
-        },
-        {
-          name: 'expiry_date',
-          type: 'date',
-          placeholder: 'Expiry Date',
-          value: item.expiry_date ? item.expiry_date.split('T')[0] : ''
-        },
-        {
-          name: 'notes',
-          type: 'textarea',
-          placeholder: 'Additional Notes',
-          value: item.notes || ''
-        }
-      ],
-      buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel'
-        },
-        {
-          text: 'Update Item',
-          handler: (data) => {
-            this.performEditItem(item.id, data);
-          }
-        }
-      ]
-    });
+    this.editingInventoryItemId = item.id;
+    this.editInventoryForm = {
+      item_name: item.item_name || '',
+      description: item.description || '',
+      category: item.category || '',
+      unit: item.unit || '',
+      current_stock: Number(item.current_stock || 0),
+      minimum_stock: Number(item.minimum_stock || 0),
+      maximum_stock: item.maximum_stock !== null && item.maximum_stock !== undefined ? Number(item.maximum_stock) : null,
+      unit_cost: Number(item.unit_cost || 0),
+      supplier: item.supplier || '',
+      expiry_date: item.expiry_date ? item.expiry_date.split('T')[0] : '',
+      notes: item.notes || '',
+    };
+    this.isEditInventoryModalOpen = true;
+  }
 
-    await alert.present();
+  closeEditInventoryModal() {
+    this.isEditInventoryModalOpen = false;
+    this.editingInventoryItemId = null;
+  }
+
+  async submitEditInventoryModal() {
+    if (!this.editingInventoryItemId) {
+      return;
+    }
+
+    const data = {
+      ...this.editInventoryForm,
+      maximum_stock: this.editInventoryForm.maximum_stock ?? undefined,
+    };
+
+    await this.performEditItem(this.editingInventoryItemId, data);
+    this.closeEditInventoryModal();
   }
 
   async performEditItem(itemId: number, data: any) {

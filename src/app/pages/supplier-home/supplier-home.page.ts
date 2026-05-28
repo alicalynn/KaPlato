@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
+import { InventoryService, SupplyOrder } from '../../services/inventory.service';
 
 interface InventoryItem {
   id: string;
@@ -17,21 +18,8 @@ interface InventoryItem {
   supplier_id?: string;
 }
 
-interface IngredientRequest {
-  id: string;
-  title: string;
-  description: string;
-  ingredient_type: string;
-  needed_quantity: number;
-  unit: string;
-  budget: number;
-  needed_by_date: string;
-  karenderia?: {
-    business_name: string;
-  };
-  accepted_supplier_id?: string;
-  status: string;
-}
+// Note: supplier side uses supply orders (placed from karenderia marketplace),
+// not ingredient request bids. Keep this file focused on supply orders + messages.
 
 interface Message {
   id: string;
@@ -50,8 +38,8 @@ interface Message {
   standalone: true,
   imports: [CommonModule, FormsModule, IonicModule],
   template: `
-    <ion-header>
-      <ion-toolbar color="primary">
+    <ion-header [translucent]="true" class="supplier-header">
+      <ion-toolbar class="supplier-toolbar">
         <ion-buttons slot="start">
           <ion-menu-button></ion-menu-button>
         </ion-buttons>
@@ -61,14 +49,14 @@ interface Message {
           </ion-text>
         </ion-title>
         <ion-buttons slot="end">
-          <ion-button (click)="logout()">
+          <ion-button (click)="logout()" fill="clear" class="supplier-icon-btn" aria-label="Logout">
             <ion-icon name="log-out" slot="start"></ion-icon>
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content [fullscreen]="true">
+    <ion-content [fullscreen]="true" class="supplier-content">
       <!-- Welcome Section -->
       <div class="welcome-section">
         <div class="welcome-card">
@@ -77,35 +65,15 @@ interface Message {
         </div>
       </div>
 
-      <!-- Stats Section -->
-      <ion-card class="stats-container">
-        <div class="stat-item">
-          <div class="stat-value">{{ inventoryItems.length }}</div>
-          <div class="stat-label">Items</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value">{{ lowStockItems.length }}</div>
-          <div class="stat-label">Low Stock</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value">{{ availableRequests.length }}</div>
-          <div class="stat-label">Requests</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value">{{ unreadMessages }}</div>
-          <div class="stat-label">Unread</div>
-        </div>
-      </ion-card>
-
       <!-- Tab Selector -->
       <ion-segment [(ngModel)]="activeTab" (ionChange)="onTabChange($event)" class="tab-segment">
         <ion-segment-button value="inventory" layout="icon-bottom">
           <ion-icon name="cube"></ion-icon>
           <ion-label>Inventory</ion-label>
         </ion-segment-button>
-        <ion-segment-button value="requests" layout="icon-bottom">
-          <ion-icon name="document-text"></ion-icon>
-          <ion-label>Requests</ion-label>
+        <ion-segment-button value="orders" layout="icon-bottom">
+          <ion-icon name="receipt-outline"></ion-icon>
+          <ion-label>Orders</ion-label>
         </ion-segment-button>
         <ion-segment-button value="messages" layout="icon-bottom">
           <ion-icon name="chatbubbles"></ion-icon>
@@ -194,78 +162,74 @@ interface Message {
         </ion-card>
       </div>
 
-      <!-- REQUESTS TAB -->
-      <div *ngIf="activeTab === 'requests'" class="tab-content">
+      <!-- ORDERS TAB -->
+      <div *ngIf="activeTab === 'orders'" class="tab-content">
         <ion-card class="section-card">
           <ion-card-header>
             <ion-card-title>
-              <ion-icon name="document-text" color="success"></ion-icon>
-              Available Requests ({{ availableRequests.length }})
+              <ion-icon name="receipt-outline" color="success"></ion-icon>
+              Incoming Orders ({{ supplierOrders.length }})
             </ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <div *ngIf="requestsLoading" class="loading">
+            <div *ngIf="ordersLoading" class="loading">
               <ion-spinner></ion-spinner>
-              <p>Loading requests...</p>
+              <p>Loading orders...</p>
             </div>
-            <div *ngIf="!requestsLoading && availableRequests.length === 0" class="empty-state">
-              <ion-icon name="document-outline"></ion-icon>
-              <p>No available requests at this time</p>
-              <p class="empty-hint">Check back later for new requests from karenderias</p>
+            <div *ngIf="!ordersLoading && supplierOrders.length === 0" class="empty-state">
+              <ion-icon name="receipt-outline"></ion-icon>
+              <p>No incoming orders yet</p>
+              <p class="empty-hint">Orders placed by karenderias will appear here.</p>
             </div>
-            <div *ngIf="!requestsLoading && availableRequests.length > 0">
+            <div *ngIf="!ordersLoading && supplierOrders.length > 0">
               <div class="requests-list">
                 <ion-card 
-                  *ngFor="let request of availableRequests" 
+                  *ngFor="let order of supplierOrders" 
                   class="request-card"
-                  (click)="viewRequest(request)"
+                  (click)="openInInventoryManagement($event)"
                 >
                   <ion-card-content>
                     <div class="request-header">
-                      <h5>{{ request.title }}</h5>
-                      <span class="request-status" [ngClass]="request.status">
-                        {{ request.status | titlecase }}
+                      <h5>{{ order.karenderia?.business_name || order.karenderia?.name || 'Karenderia' }}</h5>
+                      <span class="request-status" [ngClass]="order.status">
+                        {{ order.status | titlecase }}
                       </span>
                     </div>
                     <div class="request-details">
                       <div class="detail-row">
-                        <span class="label">Karenderia:</span>
-                        <span class="value">{{ request.karenderia?.business_name || 'N/A' }}</span>
+                        <span class="label">Order #:</span>
+                        <span class="value">#{{ order.id }}</span>
                       </div>
                       <div class="detail-row">
-                        <span class="label">Ingredient:</span>
-                        <span class="value">{{ request.ingredient_type }}</span>
+                        <span class="label">Items:</span>
+                        <span class="value">{{ order.items?.length || 0 }}</span>
                       </div>
                       <div class="detail-row">
-                        <span class="label">Quantity:</span>
-                        <span class="value">{{ request.needed_quantity }} {{ request.unit }}</span>
+                        <span class="label">Total:</span>
+                        <span class="value budget">₱{{ (order.total_amount || 0).toFixed(2) }}</span>
                       </div>
                       <div class="detail-row">
-                        <span class="label">Budget:</span>
-                        <span class="value budget">₱{{ request.budget.toFixed(2) }}</span>
-                      </div>
-                      <div class="detail-row">
-                        <span class="label">Needed by:</span>
-                        <span class="value">{{ request.needed_by_date | date:'MMM dd, yyyy' }}</span>
+                        <span class="label">Placed:</span>
+                        <span class="value">{{ order.created_at | date:'MMM dd, yyyy' }}</span>
                       </div>
                     </div>
                     <div class="request-actions">
                       <ion-button 
                         expand="block" 
                         size="small"
-                        (click)="submitQuote(request, $event)"
+                        (click)="openInInventoryManagement($event)"
                       >
-                        <ion-icon name="pricetag" slot="start"></ion-icon>
-                        Submit Quote
+                        <ion-icon name="open-outline" slot="start"></ion-icon>
+                        Open Orders
                       </ion-button>
                       <ion-button 
                         expand="block" 
                         fill="outline"
                         size="small"
-                        (click)="messageOwner(request, $event)"
+                        (click)="openInInventoryManagement($event)"
                       >
-                        <ion-icon name="chatbubble" slot="start"></ion-icon>
-                        Message
+                        <ion-icon name="settings-outline" slot="start"></ion-icon>
+                        Manage
                       </ion-button>
                     </div>
                   </ion-card-content>
@@ -325,21 +289,48 @@ interface Message {
   `,
   styles: [`
     :host {
-      --ion-background-color: #f5f5f5;
+      --supplier-green-50: #f0fdf4;
+      --supplier-green-100: #dcfce7;
+      --supplier-green-600: #16a34a;
+      --supplier-green-700: #15803d;
+      --supplier-green-800: #166534;
+      --supplier-surface: rgba(255, 255, 255, 0.96);
+      --supplier-border: rgba(15, 23, 42, 0.10);
+      --supplier-text: #0f172a;
+      --supplier-muted: #64748b;
     }
 
-    ion-content {
+    .supplier-header {
+      --background: transparent;
+    }
+
+    .supplier-toolbar {
+      --background: linear-gradient(135deg, var(--supplier-green-700) 0%, #22c55e 55%, #86efac 140%);
+      --color: white;
+      min-height: 60px;
+      box-shadow: 0 4px 20px rgba(22, 163, 74, 0.25);
+    }
+
+    .supplier-icon-btn {
+      --color: white;
+      --background: rgba(255, 255, 255, 0.12);
+      --border-radius: 10px;
+      backdrop-filter: blur(10px);
+    }
+
+    ion-content.supplier-content {
       --padding-start: 0;
       --padding-end: 0;
       --padding-top: 0;
       --padding-bottom: 0;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --background: linear-gradient(180deg, var(--supplier-green-50) 0%, #ffffff 60%, #ffffff 100%);
     }
 
     .welcome-section {
       padding: 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      background: linear-gradient(135deg, var(--supplier-green-800) 0%, var(--supplier-green-600) 55%, #34d399 120%);
+      color: #ffffff;
+      padding-bottom: 18px;
     }
 
     .welcome-card {
@@ -349,12 +340,14 @@ interface Message {
     .welcome-card h1 {
       font-size: 1.8rem;
       margin: 10px 0 5px;
-      font-weight: 600;
+      font-weight: 800;
+      letter-spacing: -0.02em;
     }
 
     .welcome-card p {
       opacity: 0.9;
       margin: 0;
+      font-weight: 500;
     }
 
     .stats-container {
@@ -363,8 +356,9 @@ interface Message {
       padding: 15px;
       margin: 15px;
       border-radius: 12px;
-      background: white;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      background: var(--supplier-surface);
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+      border: 1px solid var(--supplier-border);
     }
 
     .stat-item {
@@ -375,21 +369,42 @@ interface Message {
     .stat-value {
       font-size: 2rem;
       font-weight: 700;
-      color: #667eea;
+      color: var(--supplier-green-700);
     }
 
     .stat-label {
       font-size: 0.8rem;
-      color: #888;
+      color: var(--supplier-muted);
       margin-top: 5px;
+      font-weight: 600;
     }
 
     .tab-segment {
       margin: 15px;
+      margin-top: -12px;
       border-radius: 12px;
-      background: white;
+      background: var(--supplier-surface);
       padding: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+      border: 1px solid var(--supplier-border);
+
+      --background: transparent;
+      --indicator-color: transparent;
+      --border-radius: 12px;
+    }
+
+    .tab-segment ion-segment-button {
+      --border-radius: 10px;
+      --color: var(--supplier-muted);
+      --color-checked: white;
+      --background-checked: linear-gradient(135deg, var(--supplier-green-700), #22c55e);
+      --indicator-color: transparent;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .tab-segment ion-segment-button ion-icon {
+      color: inherit;
     }
 
     .tab-content {
@@ -409,18 +424,19 @@ interface Message {
       margin: 15px;
       border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+      border: 1px solid var(--supplier-border);
     }
 
     ion-card-header {
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      background: linear-gradient(135deg, rgba(22, 163, 74, 0.10) 0%, rgba(134, 239, 172, 0.18) 100%);
       padding: 15px;
       ion-card-title {
         display: flex;
         align-items: center;
         gap: 10px;
         font-weight: 600;
-        color: #333;
+        color: var(--supplier-text);
         ion-icon {
           font-size: 1.3rem;
         }
@@ -450,18 +466,18 @@ interface Message {
       align-items: center;
       justify-content: center;
       padding: 30px;
-      color: #999;
+      color: var(--supplier-muted);
       text-align: center;
 
       ion-icon {
         font-size: 3rem;
-        color: #ddd;
+        color: rgba(22, 163, 74, 0.25);
         margin-bottom: 10px;
       }
 
       .empty-hint {
         font-size: 0.85rem;
-        color: #aaa;
+        color: #94a3b8;
         margin-top: 5px;
       }
     }
@@ -491,7 +507,7 @@ interface Message {
         }
 
         .quantity {
-          background: #667eea;
+          background: linear-gradient(135deg, var(--supplier-green-700), #22c55e);
           color: white;
           padding: 4px 8px;
           border-radius: 4px;
@@ -584,11 +600,11 @@ interface Message {
     .request-card {
       cursor: pointer;
       transition: all 0.3s ease;
-      border-left: 4px solid #667eea;
+      border-left: 4px solid var(--supplier-green-700);
 
       &:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        box-shadow: 0 14px 30px rgba(22, 163, 74, 0.18);
       }
 
       ion-card-content {
@@ -692,7 +708,7 @@ interface Message {
       }
 
       &.unread {
-        background: #f0f4ff;
+        background: rgba(22, 163, 74, 0.08);
         font-weight: 600;
       }
 
@@ -704,7 +720,7 @@ interface Message {
         flex-shrink: 0;
         ion-icon {
           font-size: 2rem;
-          color: #667eea;
+          color: var(--supplier-green-700);
         }
       }
 
@@ -737,7 +753,7 @@ interface Message {
         width: 8px;
         height: 8px;
         border-radius: 50%;
-        background: #667eea;
+        background: var(--supplier-green-700);
         flex-shrink: 0;
       }
     }
@@ -758,9 +774,9 @@ export class SupplierHomePage implements OnInit {
   inventoryLoading = false;
   lowStockItems: InventoryItem[] = [];
 
-  // Requests
-  availableRequests: IngredientRequest[] = [];
-  requestsLoading = false;
+  // Orders (supply orders placed by karenderias)
+  supplierOrders: SupplyOrder[] = [];
+  ordersLoading = false;
 
   // Messages
   recentMessages: Message[] = [];
@@ -772,7 +788,8 @@ export class SupplierHomePage implements OnInit {
   constructor(
     private http: HttpClient,
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private inventoryService: InventoryService
   ) {
     this.currentUser = this.authService.getCurrentUser();
   }
@@ -794,7 +811,7 @@ export class SupplierHomePage implements OnInit {
 
   loadDashboardData() {
     this.loadInventory();
-    this.loadAvailableRequests();
+    this.loadSupplierOrders();
     this.loadRecentMessages();
   }
 
@@ -817,19 +834,18 @@ export class SupplierHomePage implements OnInit {
     });
   }
 
-  loadAvailableRequests() {
-    this.requestsLoading = true;
-    this.http.get<IngredientRequest[]>(
-      `${this.apiUrl}/ingredient-requests/supplier/available`,
-      { headers: { Authorization: `Bearer ${this.authService.getAuthToken()}` } }
-    ).subscribe({
-      next: (requests) => {
-        this.availableRequests = requests || [];
-        this.requestsLoading = false;
+  loadSupplierOrders() {
+    this.ordersLoading = true;
+    this.inventoryService.getSupplierSupplyOrders().subscribe({
+      next: (response: any) => {
+        // API shape across the app typically returns { data: [...] }
+        this.supplierOrders = response?.data || response || [];
+        this.ordersLoading = false;
       },
       error: (err) => {
-        console.error('Error loading requests:', err);
-        this.requestsLoading = false;
+        console.error('Error loading supplier orders:', err);
+        this.supplierOrders = [];
+        this.ordersLoading = false;
       }
     });
   }
@@ -875,25 +891,12 @@ export class SupplierHomePage implements OnInit {
     this.router.navigate(['/inventory-management'], { queryParams: { itemId: item.id } });
   }
 
-  viewRequest(request: IngredientRequest) {
-    this.router.navigate(['/supplier-request-detail', request.id]);
-  }
-
-  submitQuote(request: IngredientRequest, event: any) {
-    event.stopPropagation();
-    this.router.navigate(['/supplier-quotes/new'], { 
-      queryParams: { requestId: request.id } 
-    });
-  }
-
-  messageOwner(request: IngredientRequest, event: any) {
-    event.stopPropagation();
-    // Navigate to the request detail page which includes messaging
-    this.router.navigate(['/supplier-request-detail', request.id]);
-  }
-
-  browseAllRequests() {
-    this.router.navigate(['/supplier/requests']);
+  openInInventoryManagement(event?: any) {
+    if (event?.stopPropagation) {
+      event.stopPropagation();
+    }
+    // Inventory Management already has a supplier orders segment; we deep-link to it.
+    this.router.navigate(['/inventory-management'], { queryParams: { segment: 'supplier-orders' } });
   }
 
   viewConversation(message: Message) {

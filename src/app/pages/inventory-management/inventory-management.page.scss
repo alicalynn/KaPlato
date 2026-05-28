@@ -1,3 +1,8 @@
+.inventory-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
 .stats-container {
   padding: 16px;
 }
@@ -59,16 +64,115 @@
   }
 }
 
+.filter-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+
+  &__select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__add-btn {
+    margin: 0;
+    flex-shrink: 0;
+    min-height: 44px;
+  }
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 16px;
+  padding: 0 16px 16px;
+  align-items: start;
+
+  @media (max-width: 420px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.marketplace-quick-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
 .suki-filter-item {
-  margin-top: 6px;
+  margin-top: 0;
   --background: rgba(var(--ion-color-warning-rgb), 0.08);
-  border-radius: 10px;
+  --inner-padding-start: 14px;
+  --inner-padding-end: 10px;
+  --min-height: 56px;
+  border: 1px solid rgba(var(--ion-color-warning-rgb), 0.22);
+  border-radius: 12px;
+  width: fit-content;
+  min-width: 320px;
+  max-width: 420px;
+
+  ion-label {
+    margin: 0;
+
+    h3 {
+      margin: 0;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--ion-color-dark);
+    }
+
+    p {
+      margin: 3px 0 0;
+      font-size: 0.78rem;
+      color: var(--ion-color-medium);
+    }
+  }
+
+  ion-toggle {
+    --handle-width: 20px;
+    --handle-height: 20px;
+    --track-background: rgba(var(--ion-color-medium-rgb), 0.35);
+    --track-background-checked: rgba(var(--ion-color-warning-rgb), 0.45);
+    --handle-background-checked: var(--ion-color-warning);
+  }
 }
 
 .suki-count {
   margin: 8px 0 4px;
   font-size: 0.85rem;
   color: var(--ion-color-medium);
+}
+
+.refresh-listings-btn {
+  margin-top: 0;
+  --border-radius: 999px;
+  --padding-top: 11px;
+  --padding-bottom: 11px;
+  --padding-start: 18px;
+  --padding-end: 18px;
+  --border-width: 1.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  align-self: center;
+}
+
+@media (max-width: 768px) {
+  .marketplace-quick-controls {
+    align-items: stretch;
+  }
+
+  .suki-filter-item {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .refresh-listings-btn {
+    align-self: flex-start;
+  }
 }
 
 .supplier-name-row {
@@ -361,7 +465,9 @@
 }
 
 .inventory-card {
-  margin: 8px 16px;
+  margin: 0;
+  height: fit-content;
+  align-self: start;
   
   .card-header {
     display: flex;
@@ -467,6 +573,80 @@
 }
 
 .alert-card {
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.inventory-edit-modal-content {
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+}
+
+.inventory-modal-header {
+  ion-toolbar {
+    --background: linear-gradient(135deg, #6366f1 0%, #d946ef 100%);
+    --color: #ffffff;
+  }
+}
+
+.modal-close-btn {
+  --background: rgba(255, 255, 255, 0.18);
+  --color: #ffffff;
+  --border-radius: 8px;
+}
+
+// Supplier Section Headers
+.section-header-supplier {
+  padding: 20px 16px 12px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.08));
+  border-bottom: 2px solid rgba(59, 130, 246, 0.2);
+  margin-bottom: 16px;
+  border-radius: 8px;
+
+  h2 {
+    margin: 0 0 4px 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--ion-color-dark);
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--ion-color-medium);
+  }
+}
+
+.inventory-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  ion-item {
+    --background: var(--app-surface-color);
+    --border-radius: 10px;
+    border: 1px solid var(--ion-border-color);
+    border-radius: 10px;
+  }
+}
+
+.restock-stock-text {
+  margin: 4px 2px 8px;
+  color: var(--ion-color-medium);
+  font-weight: 600;
+}
+
+.inventory-edit-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 8px 8px 10px;
+}
+
+.alert-card {
   margin-bottom: 16px;
   
   &.warning {
@@ -540,6 +720,15 @@
 
 // Responsive design
 @media (max-width: 768px) {
+  .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+
+    &__add-btn {
+      width: 100%;
+    }
+  }
+
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }

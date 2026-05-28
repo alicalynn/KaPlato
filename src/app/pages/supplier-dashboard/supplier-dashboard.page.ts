@@ -35,7 +35,7 @@ import { AuthService, User } from '../../services/auth.service';
         <!-- Welcome Header -->
         <div class="welcome-header">
           <div class="welcome-content">
-            <h1>Welcome, {{ currentUser?.name }}! 👋</h1>
+            <h1>Welcome, {{ currentUser?.name }}!</h1>
             <p>Manage your supplies and ingredient requests</p>
           </div>
         </div>
@@ -112,7 +112,7 @@ import { AuthService, User } from '../../services/auth.service';
     }
 
     .gradient-toolbar {
-      --background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --background: linear-gradient(135deg, #166534 0%, #16a34a 55%, #86efac 140%);
       --padding-start: 0;
       --padding-end: 0;
       min-height: 60px;
@@ -132,7 +132,7 @@ import { AuthService, User } from '../../services/auth.service';
     }
 
     .modern-dashboard {
-      --background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+      --background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 65%, #ffffff 100%);
     }
 
     .dashboard-content {
@@ -143,7 +143,7 @@ import { AuthService, User } from '../../services/auth.service';
 
     .welcome-header {
       padding: 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #166534 0%, #16a34a 55%, #34d399 120%);
       border-radius: 12px;
       color: white;
       margin-bottom: 24px;
@@ -195,7 +195,7 @@ import { AuthService, User } from '../../services/auth.service';
 
     .action-card .icon {
       font-size: 24px;
-      color: #667eea;
+      color: #16a34a;
       flex-shrink: 0;
     }
 

@@ -16,15 +16,6 @@
 
     <!-- Content Area -->
     <div class="content-area">
-      <!-- Tabs Section -->
-      <div class="menu-tabs">
-        <div class="tab-item active">
-          <span>Menu Items</span>
-        </div>
-        <div class="tab-item">
-          <span>Inventory</span>
-        </div>
-      </div>
 
       <!-- Search and Filter Section -->
       <div class="search-filter-section">
@@ -70,200 +61,290 @@
         <ion-card-content>
 
         <form class="modern-menu-form">
-          <!-- Basic Information Section -->
-          <div class="form-section">
-            <div class="section-header">
-              <ion-icon name="information-circle" color="primary"></ion-icon>
-              <h3>Basic Information</h3>
-            </div>
-            
-            <div class="input-group">
-              <ion-item class="modern-item">
-                <ion-input 
-                  [(ngModel)]="newMenuItem.name" 
-                  label="Dish Name *"
-                  labelPlacement="stacked"
-                  placeholder="Enter delicious dish name"
-                  class="modern-input">
-                </ion-input>
-              </ion-item>
-              
-              <ion-item class="modern-item">
-                <ion-textarea 
-                  [(ngModel)]="newMenuItem.description" 
-                  label="Description *"
-                  labelPlacement="stacked"
-                  placeholder="Describe your dish in detail"
-                  rows="3"
-                  class="modern-textarea">
-                </ion-textarea>
-              </ion-item>
-            </div>
-          </div>
-
-          <!-- Pricing & Category Section -->
-          <div class="form-section">
-            <div class="section-header">
-              <ion-icon name="pricetag" color="success"></ion-icon>
-              <h3>Pricing & Category</h3>
-            </div>
-            
-            <div class="form-grid">
-              <ion-item class="modern-item">
-                <ion-input 
-                  [(ngModel)]="newMenuItem.price" 
-                  type="number" 
-                  label="Price (PHP) *"
-                  labelPlacement="stacked"
-                  placeholder="0.00"
-                  class="modern-input">
-                </ion-input>
-              </ion-item>
-              
-              <ion-item class="modern-item">
-                <ion-select 
-                  [(ngModel)]="newMenuItem.category"
-                  label="Category"
-                  labelPlacement="stacked"
-                  placeholder="Select category"
-                  class="modern-select">
-                  <ion-select-option value="appetizers">Appetizers</ion-select-option>
-                  <ion-select-option value="main">Main Course</ion-select-option>
-                  <ion-select-option value="desserts">Desserts</ion-select-option>
-                  <ion-select-option value="beverages">Beverages</ion-select-option>
-                </ion-select>
-              </ion-item>
-            </div>
-            
-            <ion-item class="modern-item">
-              <ion-input 
-                [(ngModel)]="newMenuItem.preparationTime" 
-                type="number" 
-                label="Preparation Time (minutes)"
-                labelPlacement="stacked"
-                placeholder="15"
-                class="modern-input">
-              </ion-input>
-            </ion-item>
-
-            <ion-item class="modern-item">
-              <ion-label>Available for Ordering</ion-label>
-              <ion-toggle [(ngModel)]="newMenuItem.isAvailable"></ion-toggle>
-            </ion-item>
-          </div>
-
-          <!-- Dish Type Selection -->
-          <div class="form-section">
-            <div class="section-header">
-              <ion-icon name="restaurant" color="warning"></ion-icon>
-              <h3>Dish Type</h3>
-            </div>
-            
-            <ion-item class="modern-item">
-              <ion-select 
-                [(ngModel)]="selectedDishType" 
-                (ionChange)="onDishTypeChange()" 
-                label="Choose a dish type for suggested ingredients"
-                labelPlacement="stacked"
-                placeholder="Select dish type"
-                class="modern-select">
-                <ion-select-option value="">Custom Recipe</ion-select-option>
-                <ion-select-option *ngFor="let dishType of getDishTypes()" [value]="dishType">
-                  {{ getDishTypeDisplay(dishType) }}
-                </ion-select-option>
-              </ion-select>
-            </ion-item>
-          </div>
-
-          <!-- Ingredient Selection -->
-          <div class="form-section" *ngIf="showIngredientSelection">
-            <div class="section-header">
-              <ion-icon name="nutrition" color="tertiary"></ion-icon>
-              <h3>Select Ingredients</h3>
-            </div>
-            <p class="helper-text">Check the ingredients you want to include. You can modify quantities and costs below.</p>
-            
-            <div class="ingredient-checkboxes">
-              <ion-item *ngFor="let ingredient of commonIngredients[selectedDishType]" class="ingredient-checkbox-item">
-                <ion-checkbox 
-                  slot="start" 
-                  [checked]="isIngredientSelected(ingredient.name)"
-                  (ionChange)="toggleIngredient(ingredient, $event.detail.checked)">
-                </ion-checkbox>
-                <ion-label>
-                  <h3>{{ ingredient.name }}</h3>
-                  <p>{{ ingredient.quantity }} {{ ingredient.unit }} - {{ formatPhp(ingredient.cost) }}</p>
-                </ion-label>
-              </ion-item>
-            </div>
-          </div>
-
-          <!-- Selected Ingredients -->
-          <div class="form-section" *ngIf="newMenuItem.selectedIngredients.length > 0">
-            <div class="section-header">
-              <ion-icon name="checkmark-done" color="success"></ion-icon>
-              <h3>Selected Ingredients</h3>
-              <ion-button fill="clear" (click)="addCustomIngredient()">
-                <ion-icon name="add-circle" slot="start"></ion-icon>
-                Add Custom
-              </ion-button>
-            </div>
-            
-            <div class="selected-ingredients">
-              <ion-item *ngFor="let ingredient of newMenuItem.selectedIngredients; let i = index" class="selected-ingredient-item">
-                <div class="ingredient-details">
-                  <h4>{{ ingredient.ingredientName }}</h4>
-                  <div class="ingredient-inputs">
-                    <ion-input 
-                      type="number" 
-                      [value]="ingredient.quantity"
-                      (ionBlur)="updateIngredientQuantity(i, +($event.target.value || 0))"
-                      placeholder="Quantity">
-                    </ion-input>
-                    <span class="unit">{{ ingredient.unit }}</span>
-                    <ion-input 
-                      type="number" 
-                      [value]="ingredient.cost"
-                      (ionBlur)="updateIngredientCost(i, +($event.target.value || 0))"
-                      placeholder="Cost">
-                    </ion-input>
-                    <span class="currency">PHP</span>
+          <div class="form-layout">
+            <!-- Left column: dish details -->
+            <div class="form-layout__main">
+              <div class="form-section form-section--card">
+                <div class="section-header">
+                  <ion-icon name="information-circle-outline" color="primary"></ion-icon>
+                  <div>
+                    <h3>Basic information</h3>
+                    <p>Name and describe your dish</p>
                   </div>
                 </div>
-                <ion-button 
-                  fill="clear" 
-                  color="danger" 
-                  slot="end" 
-                  (click)="removeIngredient(i)">
-                  <ion-icon name="trash"></ion-icon>
-                </ion-button>
-              </ion-item>
-              
-              <div class="total-cost">
-                <h3>Total Ingredient Cost: {{ formatPhp(getTotalCost()) }}</h3>
-                <p>Suggested selling price: {{ formatPhp(getTotalCost() * 2.5) }}</p>
+
+                <div class="field-stack">
+                  <ion-item class="modern-item" lines="none">
+                    <ion-input
+                      [(ngModel)]="newMenuItem.name"
+                      name="dishName"
+                      label="Dish name *"
+                      labelPlacement="stacked"
+                      placeholder="e.g. Pork Adobo"
+                      class="modern-input">
+                    </ion-input>
+                  </ion-item>
+
+                  <ion-item class="modern-item" lines="none">
+                    <ion-textarea
+                      [(ngModel)]="newMenuItem.description"
+                      name="dishDescription"
+                      label="Description *"
+                      labelPlacement="stacked"
+                      placeholder="What makes this dish special?"
+                      rows="3"
+                      class="modern-textarea">
+                    </ion-textarea>
+                  </ion-item>
+                </div>
               </div>
 
-              <div class="allergen-preview" *ngIf="getDetectedAllergensPreview().length > 0">
-                <h4>Auto-Detected Allergens</h4>
-                <p>These warnings will be shown to customers when they browse your dish.</p>
-                <ion-chip color="warning" *ngFor="let allergen of getDetectedAllergensPreview()">
-                  <ion-icon name="warning-outline" slot="start"></ion-icon>
-                  <ion-label>{{ allergen }}</ion-label>
-                </ion-chip>
+              <div class="form-section form-section--card">
+                <div class="section-header">
+                  <ion-icon name="pricetag-outline" color="success"></ion-icon>
+                  <div>
+                    <h3>Pricing & availability</h3>
+                    <p>Set how this item appears on your menu</p>
+                  </div>
+                </div>
+
+                <div class="form-grid">
+                  <ion-item class="modern-item" lines="none">
+                    <ion-input
+                      [(ngModel)]="newMenuItem.price"
+                      name="dishPrice"
+                      type="number"
+                      label="Selling price (₱) *"
+                      labelPlacement="stacked"
+                      placeholder="0.00"
+                      class="modern-input">
+                    </ion-input>
+                  </ion-item>
+
+                  <ion-item class="modern-item" lines="none">
+                    <ion-select
+                      [(ngModel)]="newMenuItem.category"
+                      name="dishCategory"
+                      label="Category"
+                      labelPlacement="stacked"
+                      placeholder="Select category"
+                      class="modern-select">
+                      <ion-select-option value="appetizers">Appetizers</ion-select-option>
+                      <ion-select-option value="main">Main Course</ion-select-option>
+                      <ion-select-option value="desserts">Desserts</ion-select-option>
+                      <ion-select-option value="beverages">Beverages</ion-select-option>
+                    </ion-select>
+                  </ion-item>
+                </div>
+
+                <div class="form-grid form-grid--triple">
+                  <ion-item class="modern-item" lines="none">
+                    <ion-input
+                      [(ngModel)]="newMenuItem.preparationTime"
+                      name="prepTime"
+                      type="number"
+                      label="Prep time (min)"
+                      labelPlacement="stacked"
+                      placeholder="15"
+                      class="modern-input">
+                    </ion-input>
+                  </ion-item>
+
+                  <ion-item class="modern-item availability-toggle" lines="none">
+                    <ion-label>
+                      <strong>Available for ordering</strong>
+                      <p>Show on menu & POS</p>
+                    </ion-label>
+                    <ion-toggle [(ngModel)]="newMenuItem.isAvailable" name="isAvailable" slot="end"></ion-toggle>
+                  </ion-item>
+                </div>
+              </div>
+
+              <div class="form-section form-section--card recipe-section">
+                <div class="section-header section-header--split">
+                  <div class="section-header__left">
+                    <ion-icon name="restaurant-outline" color="warning"></ion-icon>
+                    <div>
+                      <h3>Recipe & ingredients</h3>
+                      <p>Build your cost breakdown line by line</p>
+                    </div>
+                  </div>
+                  <ion-button fill="outline" size="small" class="add-ingredient-btn" (click)="addCustomIngredient()">
+                    <ion-icon name="add" slot="start"></ion-icon>
+                    Add ingredient
+                  </ion-button>
+                </div>
+
+                <ion-item class="modern-item recipe-template-select" lines="none">
+                  <ion-select
+                    [(ngModel)]="selectedDishType"
+                    name="dishType"
+                    (ionChange)="onDishTypeChange()"
+                    label="Start from a template (optional)"
+                    labelPlacement="stacked"
+                    placeholder="Custom recipe — add ingredients manually"
+                    class="modern-select">
+                    <ion-select-option value="">Custom recipe</ion-select-option>
+                    <ion-select-option *ngFor="let dishType of getDishTypes()" [value]="dishType">
+                      {{ getDishTypeDisplay(dishType) }}
+                    </ion-select-option>
+                  </ion-select>
+                </ion-item>
+
+                <div *ngIf="showIngredientSelection" class="template-pills">
+                  <p class="template-pills__hint">
+                    Tap to include or remove from <strong>{{ getDishTypeDisplay(selectedDishType) }}</strong>:
+                  </p>
+                  <div class="template-pills__grid">
+                    <button
+                      type="button"
+                      *ngFor="let ingredient of commonIngredients[selectedDishType]"
+                      class="template-pill"
+                      [class.template-pill--active]="isIngredientSelected(ingredient.name)"
+                      (click)="toggleIngredient(ingredient, !isIngredientSelected(ingredient.name))">
+                      <ion-icon [name]="isIngredientSelected(ingredient.name) ? 'checkmark-circle' : 'ellipse-outline'"></ion-icon>
+                      <span class="template-pill__name">{{ ingredient.name }}</span>
+                      <span class="template-pill__meta">{{ ingredient.quantity }} {{ ingredient.unit }}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div *ngIf="newMenuItem.selectedIngredients.length > 0" class="ingredients-table-wrap">
+                  <div class="ingredients-table">
+                    <div class="ingredients-table__head" aria-hidden="true">
+                      <span class="col-name">Ingredient</span>
+                      <span class="col-qty">Qty</span>
+                      <span class="col-unit">Unit</span>
+                      <span class="col-cost">Cost (₱)</span>
+                      <span class="col-actions"></span>
+                    </div>
+
+                    <div
+                      class="ingredients-table__row"
+                      *ngFor="let ingredient of newMenuItem.selectedIngredients; let i = index">
+                      <div class="col-name">
+                        <ion-input
+                          [(ngModel)]="ingredient.ingredientName"
+                          [ngModelOptions]="{standalone: true}"
+                          placeholder="Name"
+                          class="table-input table-input--name">
+                        </ion-input>
+                      </div>
+                      <div class="col-qty">
+                        <ion-input
+                          type="number"
+                          [(ngModel)]="ingredient.quantity"
+                          [ngModelOptions]="{standalone: true}"
+                          min="0"
+                          class="table-input">
+                        </ion-input>
+                      </div>
+                      <div class="col-unit">
+                        <ion-input
+                          [(ngModel)]="ingredient.unit"
+                          [ngModelOptions]="{standalone: true}"
+                          placeholder="g"
+                          class="table-input">
+                        </ion-input>
+                      </div>
+                      <div class="col-cost">
+                        <ion-input
+                          type="number"
+                          [(ngModel)]="ingredient.cost"
+                          [ngModelOptions]="{standalone: true}"
+                          min="0"
+                          class="table-input">
+                        </ion-input>
+                      </div>
+                      <div class="col-actions">
+                        <ion-button
+                          fill="clear"
+                          color="danger"
+                          size="small"
+                          (click)="removeIngredient(i)"
+                          aria-label="Remove ingredient">
+                          <ion-icon name="trash-outline"></ion-icon>
+                        </ion-button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div *ngIf="newMenuItem.selectedIngredients.length === 0" class="ingredients-empty">
+                  <ion-icon name="nutrition-outline"></ion-icon>
+                  <p>No ingredients yet. Pick a template above or add your own.</p>
+                  <ion-button fill="outline" size="small" (click)="addCustomIngredient()">
+                    <ion-icon name="add-outline" slot="start"></ion-icon>
+                    Add first ingredient
+                  </ion-button>
+                </div>
+
+                <div *ngIf="getDetectedAllergensPreview().length > 0" class="allergen-preview">
+                  <div class="allergen-preview__header">
+                    <ion-icon name="warning-outline" color="warning"></ion-icon>
+                    <span>Auto-detected allergens</span>
+                  </div>
+                  <div class="allergen-preview__chips">
+                    <ion-chip color="warning" outline="true" *ngFor="let allergen of getDetectedAllergensPreview()">
+                      <ion-label>{{ allergen }}</ion-label>
+                    </ion-chip>
+                  </div>
+                </div>
               </div>
             </div>
+
+            <!-- Right column: cost summary (sticky on desktop) -->
+            <aside class="form-layout__aside">
+              <div class="cost-panel">
+                <h4>Cost summary</h4>
+
+                <div class="cost-panel__row">
+                  <span>Ingredient cost</span>
+                  <strong>{{ formatPhp(getTotalCost()) }}</strong>
+                </div>
+
+                <div class="cost-panel__row cost-panel__row--highlight">
+                  <span>Suggested price</span>
+                  <strong>{{ formatPhp(getSuggestedPrice()) }}</strong>
+                </div>
+                <p class="cost-panel__note">Based on 2.5× ingredient cost</p>
+
+                <ion-button
+                  expand="block"
+                  fill="outline"
+                  size="small"
+                  class="apply-price-btn"
+                  (click)="applySuggestedPrice()"
+                  [disabled]="getTotalCost() <= 0">
+                  <ion-icon name="flash-outline" slot="start"></ion-icon>
+                  Use suggested price
+                </ion-button>
+
+                <div *ngIf="newMenuItem.price > 0 && getTotalCost() > 0" class="cost-panel__margin">
+                  <span>Est. margin</span>
+                  <strong [class.positive]="getMarginPercent() > 0" [class.negative]="getMarginPercent() <= 0">
+                    {{ getMarginPercent() }}%
+                  </strong>
+                </div>
+
+                <div class="cost-panel__count">
+                  <ion-icon name="list-outline"></ion-icon>
+                  {{ newMenuItem.selectedIngredients.length }} ingredient{{ newMenuItem.selectedIngredients.length === 1 ? '' : 's' }}
+                </div>
+              </div>
+            </aside>
           </div>
 
-          <!-- Action Buttons -->
           <div class="form-actions">
-            <ion-button expand="block" fill="clear" (click)="cancelAddingItem()" class="cancel-btn">
-              <ion-icon name="close" slot="start"></ion-icon>
+            <ion-button fill="outline" (click)="cancelAddingItem()" class="cancel-btn">
               Cancel
             </ion-button>
-            <ion-button expand="block" (click)="saveMenuItem()" [disabled]="!newMenuItem.name || !newMenuItem.description || newMenuItem.price <= 0" class="save-btn">
+            <ion-button
+              (click)="saveMenuItem()"
+              [disabled]="!newMenuItem.name || !newMenuItem.description || newMenuItem.price <= 0"
+              class="save-btn">
               <ion-icon name="checkmark" slot="start"></ion-icon>
-              {{ editingItemId ? 'Update Menu Item' : 'Save Menu Item' }}
+              {{ editingItemId ? 'Update menu item' : 'Save menu item' }}
             </ion-button>
           </div>
         </form>

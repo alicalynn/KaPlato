@@ -92,6 +92,35 @@
   --ion-toolbar-color: #0f172a;
   --ion-item-background: #ffffff;
   --ion-border-color: #e2e8f0;
+
+  /* Global form readability tokens */
+  --app-form-text-color: #0f172a;
+  --app-form-placeholder-color: #64748b;
+  --app-form-label-color: #334155;
+  --app-surface-color: #ffffff;
+  --app-surface-subtle: #f8fafc;
+  --app-button-text-color: #0f172a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ion-background-color: #0b1220;
+    --ion-background-color-rgb: 11, 18, 32;
+    --ion-text-color: #e5e7eb;
+    --ion-text-color-rgb: 229, 231, 235;
+    --ion-toolbar-background: #111827;
+    --ion-toolbar-color: #e5e7eb;
+    --ion-item-background: #111827;
+    --ion-border-color: #334155;
+
+    /* Dark-mode form readability tokens */
+    --app-form-text-color: #f3f4f6;
+    --app-form-placeholder-color: #94a3b8;
+    --app-form-label-color: #cbd5e1;
+    --app-surface-color: #111827;
+    --app-surface-subtle: #1f2937;
+    --app-button-text-color: #e5e7eb;
+  }
 }
 
 /* Ensure NO gradients anywhere */
@@ -99,8 +128,29 @@ ion-button {
   --background: var(--ion-color-primary) !important;
   --background-activated: var(--ion-color-primary-shade) !important;
   --background-hover: var(--ion-color-primary-tint) !important;
+  --color: var(--ion-color-primary-contrast);
   --border-radius: 12px;
+  --opacity: 1;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+ion-button::part(native) {
+  opacity: 1 !important;
+  filter: none;
+}
+
+button {
   font-weight: 600;
+  opacity: 1;
+}
+
+/* Improve readability for custom buttons across all screens */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  color: var(--app-button-text-color);
+  opacity: 1;
+  text-shadow: none;
 }
 
 ion-card {
@@ -181,8 +231,8 @@ input, textarea, ion-input, ion-textarea {
 
 /* DEBUGGING: Force all page content to be visible but not overlapping tabs */
 ion-content {
-  --background: white !important;
-  background: white !important;
+  --background: var(--ion-background-color) !important;
+  background: var(--ion-background-color) !important;
   min-height: calc(100vh - 120px) !important; /* Reserve space for tabs */
   position: relative !important;
   z-index: 5 !important;
@@ -193,7 +243,7 @@ app-customer-home, app-browse, app-customer-profile, app-customer-settings {
   width: 100% !important;
   height: 100% !important;
   min-height: calc(100vh - 120px) !important; /* Reserve space for tabs */
-  background: white !important;
+  background: var(--ion-background-color) !important;
   position: relative !important;
   z-index: 5 !important;
 }
@@ -255,6 +305,36 @@ ion-app {
 ion-content {
   height: 100%;
   --background: transparent;
+}
+
+/* Global control readability across all screens/themes */
+ion-item,
+ion-input,
+ion-textarea,
+ion-select,
+ion-searchbar,
+ion-datetime {
+  --color: var(--app-form-text-color);
+  --placeholder-color: var(--app-form-placeholder-color);
+  --placeholder-opacity: 1;
+  --highlight-color-focused: var(--ion-color-primary);
+}
+
+ion-item {
+  --background: var(--app-surface-color);
+  --border-color: var(--ion-border-color);
+}
+
+ion-label,
+.input-label,
+.label-text-wrapper {
+  color: var(--app-form-label-color) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--app-form-placeholder-color) !important;
+  opacity: 1;
 }
 
 /* Mobile viewport fixes */

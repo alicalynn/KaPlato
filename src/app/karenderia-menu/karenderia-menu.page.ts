@@ -312,7 +312,32 @@ export class KarenderiaMenuPage implements OnInit, OnDestroy {
   }
 
   getTotalCost(): number {
-    return this.newMenuItem.selectedIngredients.reduce((total, ing) => total + ing.cost, 0);
+    return this.newMenuItem.selectedIngredients.reduce((total, ing) => total + (ing.cost || 0), 0);
+  }
+
+  getSuggestedPrice(): number {
+    return Math.round(this.getTotalCost() * 2.5 * 100) / 100;
+  }
+
+  async applySuggestedPrice(): Promise<void> {
+    const suggested = this.getSuggestedPrice();
+    if (suggested > 0) {
+      this.newMenuItem.price = suggested;
+      const toast = await this.toastController.create({
+        message: `Selling price set to ${this.formatPhp(suggested)}`,
+        duration: 2000,
+        color: 'success',
+      });
+      await toast.present();
+    }
+  }
+
+  getMarginPercent(): number {
+    const cost = this.getTotalCost();
+    if (!cost || !this.newMenuItem.price) {
+      return 0;
+    }
+    return Math.round(((this.newMenuItem.price - cost) / this.newMenuItem.price) * 100);
   }
 
   getDetectedAllergensPreview(): string[] {
@@ -388,122 +413,10 @@ export class KarenderiaMenuPage implements OnInit, OnDestroy {
   }
 
   async editMenuItem(item: MenuItem) {
-    // First, show a simple choice: Quick Edit or Advanced Edit
-    const choiceAlert = await this.alertController.create({
-      header: 'Edit Menu Item',
-      message: `How would you like to edit "${item.name}"?`,
-      buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel'
-        },
-        {
-          text: 'Quick Edit',
-          handler: () => {
-            this.showQuickEditModal(item);
-          }
-        },
-        {
-          text: 'Advanced Edit',
-          handler: () => {
-            this.showAdvancedEditModal(item);
-          }
-        }
-      ]
-    });
-
-    await choiceAlert.present();
+    await this.openDirectEditForm(item);
   }
 
-  async showQuickEditModal(item: MenuItem) {
-    const alert = await this.alertController.create({
-      header: 'Quick Edit',
-      subHeader: `Update basic details for "${item.name}"`,
-      inputs: [
-        {
-          name: 'name',
-          type: 'text',
-          placeholder: 'Dish Name',
-          value: item.name
-        },
-        {
-          name: 'description',
-          type: 'textarea',
-          placeholder: 'Description',
-          value: item.description
-        },
-        {
-          name: 'price',
-          type: 'number',
-          placeholder: 'Price (₱)',
-          value: item.price.toString(),
-          min: 0
-        },
-        {
-          name: 'preparationTime',
-          type: 'number',
-          placeholder: 'Preparation Time (minutes)',
-          value: item.preparationTime?.toString() || '15',
-          min: 1
-        }
-      ],
-      buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel'
-        },
-        {
-          text: 'Update',
-          handler: async (data) => {
-            if (!data.name || !data.description || !data.price) {
-              const errorToast = await this.toastController.create({
-                message: 'Please fill in all required fields',
-                duration: 3000,
-                color: 'danger'
-              });
-              await errorToast.present();
-              return false;
-            }
-
-            try {
-              const updates = {
-                name: data.name.trim(),
-                description: data.description.trim(),
-                price: parseFloat(data.price),
-                preparationTime: parseInt(data.preparationTime) || 15,
-                updatedAt: new Date()
-              };
-
-              await this.menuService.updateMenuItem(item.id, updates);
-              
-              const toast = await this.toastController.create({
-                message: 'Menu item updated successfully!',
-                duration: 3000,
-                color: 'success'
-              });
-              await toast.present();
-              
-              this.loadMenuItems();
-              return true;
-            } catch (error) {
-              console.error('Error updating menu item:', error);
-              const errorToast = await this.toastController.create({
-                message: 'Failed to update menu item. Please try again.',
-                duration: 3000,
-                color: 'danger'
-              });
-              await errorToast.present();
-              return false;
-            }
-          }
-        }
-      ]
-    });
-
-    await alert.present();
-  }
-
-  async showAdvancedEditModal(item: MenuItem) {
+  async openDirectEditForm(item: MenuItem) {
     // Set the current item data to the form
     this.newMenuItem = {
       name: item.name,
@@ -521,7 +434,7 @@ export class KarenderiaMenuPage implements OnInit, OnDestroy {
     this.editingItemId = item.id; // Add this property to track what we're editing
     
     const toast = await this.toastController.create({
-      message: 'Now editing menu item. Make changes and click Save to update.',
+      message: 'Editing menu item. Update details and click Save.',
       duration: 4000,
       color: 'primary'
     });

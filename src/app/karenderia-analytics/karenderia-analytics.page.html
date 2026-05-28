@@ -45,8 +45,24 @@
         </ion-segment-button>
       </ion-segment>
     </div>
+
+    <!-- Empty banner (still renders dashboard with zeros) -->
+    <div *ngIf="!hasAnyAnalyticsData()" class="modern-empty-banner" role="status" aria-live="polite">
+      <div class="banner-icon">
+        <ion-icon name="information-circle"></ion-icon>
+      </div>
+      <div class="banner-text">
+        <div class="banner-title">No data yet</div>
+        <div class="banner-subtitle">This dashboard will auto-fill once orders start coming in.</div>
+      </div>
+      <ion-button routerLink="/karenderia-menu" fill="solid" color="primary" class="banner-cta">
+        <ion-icon name="restaurant" slot="start"></ion-icon>
+        Manage menu
+      </ion-button>
+    </div>
+
     <!-- Modern Analytics Content -->
-    <div *ngIf="getSelectedAnalytics()" class="modern-analytics-content">
+    <div class="modern-analytics-content">
       
       <!-- Modern Key Metrics Grid -->
       <div class="modern-metrics-grid">
@@ -57,10 +73,10 @@
             </div>
             <div class="metric-label">Total Sales</div>
           </div>
-          <div class="metric-value">{{ formatPhp(getSelectedAnalytics()!.totalSales) }}</div>
-          <div class="metric-change positive">
-            <ion-icon name="arrow-up"></ion-icon>
-            <span>+12% from last period</span>
+          <div class="metric-value">{{ formatPhp(getSelectedAnalyticsOrEmpty().totalSales) }}</div>
+          <div class="metric-change" [class.neutral]="!hasAnyAnalyticsData()" [class.positive]="hasAnyAnalyticsData()">
+            <ion-icon [name]="hasAnyAnalyticsData() ? 'arrow-up' : 'remove'"></ion-icon>
+            <span>{{ hasAnyAnalyticsData() ? 'Ready for insights' : 'Waiting for orders' }}</span>
           </div>
         </div>
 
@@ -71,10 +87,10 @@
             </div>
             <div class="metric-label">Total Orders</div>
           </div>
-          <div class="metric-value">{{ getSelectedAnalytics()!.totalOrders }}</div>
-          <div class="metric-change positive">
-            <ion-icon name="arrow-up"></ion-icon>
-            <span>+8% from last period</span>
+          <div class="metric-value">{{ getSelectedAnalyticsOrEmpty().totalOrders }}</div>
+          <div class="metric-change" [class.neutral]="!hasAnyAnalyticsData()" [class.positive]="hasAnyAnalyticsData()">
+            <ion-icon [name]="hasAnyAnalyticsData() ? 'arrow-up' : 'remove'"></ion-icon>
+            <span>{{ hasAnyAnalyticsData() ? 'Tracking orders' : 'No orders yet' }}</span>
           </div>
         </div>
 
@@ -85,10 +101,10 @@
             </div>
             <div class="metric-label">Net Profit</div>
           </div>
-          <div class="metric-value">{{ formatPhp(getSelectedAnalytics()!.totalProfit) }}</div>
-          <div class="metric-change positive">
-            <ion-icon name="arrow-up"></ion-icon>
-            <span>{{ getProfitMarginPercentage().toFixed(1) }}% margin</span>
+          <div class="metric-value">{{ formatPhp(getSelectedAnalyticsOrEmpty().totalProfit) }}</div>
+          <div class="metric-change" [class.neutral]="!hasAnyAnalyticsData()" [class.positive]="hasAnyAnalyticsData()">
+            <ion-icon [name]="hasAnyAnalyticsData() ? 'arrow-up' : 'remove'"></ion-icon>
+            <span>{{ hasAnyAnalyticsData() ? (getProfitMarginPercentage().toFixed(1) + '% margin') : 'Margin will appear here' }}</span>
           </div>
         </div>
 
@@ -99,10 +115,10 @@
             </div>
             <div class="metric-label">Avg Order Value</div>
           </div>
-          <div class="metric-value">{{ formatPhp(getSelectedAnalytics()!.averageOrderValue) }}</div>
+          <div class="metric-value">{{ formatPhp(getSelectedAnalyticsOrEmpty().averageOrderValue) }}</div>
           <div class="metric-change neutral">
             <ion-icon name="remove"></ion-icon>
-            <span>No change</span>
+            <span>{{ hasAnyAnalyticsData() ? 'Calculated from orders' : 'Will calculate automatically' }}</span>
           </div>
         </div>
       </div>
@@ -136,7 +152,7 @@
       </div>
 
       <!-- Modern Top Items Section -->
-      <div class="modern-top-items-section" *ngIf="topItemsData.length > 0">
+      <div class="modern-top-items-section">
         <div class="section-card">
           <div class="section-header">
             <div class="header-info">
@@ -151,7 +167,13 @@
           </div>
           
           <div class="section-content">
-            <div class="top-items-list">
+            <div *ngIf="topItemsData.length === 0" class="section-empty">
+              <ion-icon name="fast-food-outline"></ion-icon>
+              <h3>No top items yet</h3>
+              <p>Once you have orders, your best sellers will show up here automatically.</p>
+            </div>
+
+            <div *ngIf="topItemsData.length > 0" class="top-items-list">
               <div *ngFor="let item of topItemsData; let i = index" class="top-item-card">
                 <div class="item-rank">
                   <span class="rank-number">{{ i + 1 }}</span>
@@ -178,7 +200,10 @@
                 </div>
                 <div class="item-progress">
                   <div class="progress-bar">
-                    <div class="progress-fill" [style.width.%]="(item.quantitySold / topItemsData[0].quantitySold) * 100"></div>
+                    <div
+                      class="progress-fill"
+                      [style.width.%]="topItemsData[0]?.quantitySold ? (item.quantitySold / topItemsData[0].quantitySold) * 100 : 0">
+                    </div>
                   </div>
                 </div>
               </div>
@@ -201,19 +226,6 @@
           </ion-button>
         </div>
       </div>
-    </div>
-
-    <!-- Modern Empty State -->
-    <div *ngIf="!getSelectedAnalytics()" class="modern-empty-state">
-      <div class="empty-icon">
-        <ion-icon name="bar-chart" size="large"></ion-icon>
-      </div>
-      <h3>No Analytics Data Available</h3>
-      <p>Add more menu items and engage with customers to see your business analytics and insights here.</p>
-      <ion-button routerLink="/karenderia-menu" color="primary" fill="solid">
-        <ion-icon name="restaurant" slot="start"></ion-icon>
-        Manage Your Menu
-      </ion-button>
     </div>
 
   </div>

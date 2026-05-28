@@ -28,9 +28,10 @@ export class CustomerGuard implements CanActivate {
           this.router.navigate(['/karenderia-dashboard']);
           return false;
         } else if (user && user.role === 'supplier') {
-          // Allow suppliers to view home for now (temporary solution)
-          console.log('✅ CustomerGuard: Supplier allowed to access home');
-          return true;
+          // Redirect suppliers to their supplier home
+          console.log('🔄 CustomerGuard: Redirecting supplier to supplier-home');
+          this.router.navigate(['/supplier-home']);
+          return false;
         } else if (user && user.role === 'admin') {
           // Redirect admins to their dashboard
           console.log('🔄 CustomerGuard: Redirecting admin to dashboard');

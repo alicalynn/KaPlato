@@ -1,7 +1,7 @@
-import { Component, Input, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, ViewChild, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule, ModalController, AlertController, ToastController } from '@ionic/angular';
+import { IonicModule, ModalController, AlertController, ToastController, IonContent } from '@ionic/angular';
 import { SupplyOrderMessagingService, SupplyOrderMessage } from '../../services/supply-order-messaging.service';
 import { AuthService } from '../../services/auth.service';
 import { Subscription, interval } from 'rxjs';
@@ -22,7 +22,7 @@ export class SupplyOrderMessagingPage implements OnInit, AfterViewChecked, OnDes
   @Input() karenderiaId: number = 0;
   @Input() otherPartyName: string = 'Other Party';
   @Input() onDismiss?: () => void;  // Callback to refresh parent's unread count
-  @ViewChild('messageContainer') private messageContainer!: ElementRef;
+  @ViewChild(IonContent) private ionContent?: IonContent;
 
   messages: SupplyOrderMessage[] = [];
   newMessage: string = '';
@@ -125,12 +125,9 @@ export class SupplyOrderMessagingPage implements OnInit, AfterViewChecked, OnDes
     return Number(this.currentUserId) === message.from_user_id;
   }
 
-  private scrollToBottom() {
+  private async scrollToBottom() {
     try {
-      if (this.messageContainer) {
-        const element = this.messageContainer.nativeElement;
-        element.scrollTop = element.scrollHeight;
-      }
+      await this.ionContent?.scrollToBottom(220);
     } catch (err) {
       console.error('Error scrolling to bottom:', err);
     }
