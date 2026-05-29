@@ -168,6 +168,11 @@ const routes: Routes = [
     canActivate: [AuthGuard, KarenderiaGuard]
   },
   {
+    path: 'supply-order-messages',
+    loadComponent: () => import('./pages/supply-order-messages-route/supply-order-messages-route.page').then(m => m.SupplyOrderMessagesRoutePage),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'supplier-dashboard',
     loadComponent: () => import('./pages/supplier-dashboard/supplier-dashboard.page').then(m => m.SupplierDashboardPage),
     canActivate: [AuthGuard]

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { KarenderiaInfoService } from '../services/karenderia-info.service';
 import { KarenderiaService } from '../services/karenderia.service';
+import { UserService } from '../services/user.service';
 import { LoadingController, ToastController, AlertController } from '@ionic/angular';
 import { AuthService } from '../services/auth.service';
 import { Subscription } from 'rxjs';
@@ -124,11 +125,13 @@ export class KarenderiaSettingsPage implements OnInit {
   ];
 
   isChangeLocationMode = false; // Flag to track if user wants to change location
+  private originalOwnerName = ''; // Track original owner name for change detection
 
   constructor(
     private router: Router,
     private karenderiaInfoService: KarenderiaInfoService,
     private karenderiaService: KarenderiaService,
+    private userService: UserService,
     private authService: AuthService,
     private loadingController: LoadingController,
     private toastController: ToastController,
@@ -186,6 +189,9 @@ export class KarenderiaSettingsPage implements OnInit {
           firstName,
           lastName: rest.join(' ')
         };
+        
+        // Store original owner name for change detection
+        this.originalOwnerName = `${firstName} ${rest.join(' ')}`.trim();
 
         // Load location settings
         this.locationSettings = {
@@ -270,7 +276,7 @@ export class KarenderiaSettingsPage implements OnInit {
         .filter(day => day.isOpen)
         .map(day => day.name.toLowerCase());
 
-      const payload = {
+      const payload: any = {
         business_name: this.businessInfo.name,
         name: this.businessInfo.name,
         business_email: this.businessInfo.email,
@@ -280,16 +286,42 @@ export class KarenderiaSettingsPage implements OnInit {
         address: this.businessInfo.address,
         latitude: this.locationSettings.latitude,
         longitude: this.locationSettings.longitude,
-        operating_days: operatingDays,
-        status: this.karenderiaStatus === 'rejected' ? 'pending' : undefined
+        operating_days: operatingDays
       };
 
+      // Only include status if resubmitting rejected application
+      if (this.karenderiaStatus === 'rejected') {
+        payload.status = 'pending';
+      }
+
+      // Remove any undefined values from payload
+      Object.keys(payload).forEach(key => {
+        if (payload[key] === undefined || payload[key] === null) {
+          delete payload[key];
+        }
+      });
+
+      // Check if owner name has changed
+      const currentOwnerName = `${this.accountSettings.firstName} ${this.accountSettings.lastName}`.trim();
+      const ownerNameChanged = currentOwnerName !== this.originalOwnerName;
+
+      // Save karenderia data
       const response = await this.karenderiaService.updateCurrentUserKarenderia(payload).toPromise();
       if (response?.success && response?.data) {
+        // Update karenderia state
         this.currentKarenderiaId = response.data.id ?? this.currentKarenderiaId;
         this.karenderiaStatus = this.normalizeKarenderiaStatus(response.data.status || this.karenderiaStatus || 'unknown');
         this.rejectionReason = response.data.rejection_reason || '';
         this.karenderiaInfoService.updateKarenderiaData(response.data);
+
+        // If owner name changed, also update user profile
+        if (ownerNameChanged) {
+          await this.userService.updateUserProfile({
+            displayName: currentOwnerName
+          }).toPromise();
+          this.originalOwnerName = currentOwnerName;
+        }
+
         await this.showToast(
           this.karenderiaStatus === 'pending'
             ? 'Application resubmitted successfully. Waiting for review.'

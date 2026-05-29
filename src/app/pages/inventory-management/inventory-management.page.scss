@@ -854,6 +854,38 @@ ion-fab-button {
 
 .supplier-orders-stats {
   padding: 16px;
+
+  .profit-summary {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+
+    @media (max-width: 576px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .profit-stat {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    text-align: center;
+
+    .profit-label {
+      font-size: 0.75rem;
+      color: var(--ion-color-medium);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .profit-amount {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+  }
 }
 
 // Quick Start Card Styling

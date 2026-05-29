@@ -2,11 +2,16 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonicModule } from '@ionic/angular';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
 import { InventoryService, SupplyOrder } from '../../services/inventory.service';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { MessageService } from '../../services/message.service';
+import { SupplyOrderMessagingService } from '../../services/supply-order-messaging.service';
+import { SupplierMessagesPanelComponent } from '../../components/supplier-messages-panel/supplier-messages-panel.component';
 
 interface InventoryItem {
   id: string;
@@ -18,25 +23,10 @@ interface InventoryItem {
   supplier_id?: string;
 }
 
-// Note: supplier side uses supply orders (placed from karenderia marketplace),
-// not ingredient request bids. Keep this file focused on supply orders + messages.
-
-interface Message {
-  id: string;
-  from_user_id: string;
-  to_user_id: string;
-  message: string;
-  is_read: boolean;
-  created_at: string;
-  fromUser?: {
-    name: string;
-  };
-}
-
 @Component({
   selector: 'app-supplier-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, IonicModule],
+  imports: [CommonModule, FormsModule, IonicModule, SupplierMessagesPanelComponent],
   template: `
     <ion-header [translucent]="true" class="supplier-header">
       <ion-toolbar class="supplier-toolbar">
@@ -75,10 +65,11 @@ interface Message {
           <ion-icon name="receipt-outline"></ion-icon>
           <ion-label>Orders</ion-label>
         </ion-segment-button>
-        <ion-segment-button value="messages" layout="icon-bottom">
+        <ion-segment-button value="messages" layout="icon-bottom" class="messages-tab-btn">
           <ion-icon name="chatbubbles"></ion-icon>
           <ion-label>Messages</ion-label>
-        </ion-segment-button>
+          <span *ngIf="unreadMessages > 0" class="segment-unread-pill">{{ formatUnreadBadge(unreadMessages) }}</span>
+          </ion-segment-button>
       </ion-segment>
 
       <!-- INVENTORY TAB -->
@@ -241,46 +232,8 @@ interface Message {
       </div>
 
       <!-- MESSAGES TAB -->
-      <div *ngIf="activeTab === 'messages'" class="tab-content">
-        <ion-card class="section-card">
-          <ion-card-header>
-            <ion-card-title>
-              <ion-icon name="chatbubbles" color="tertiary"></ion-icon>
-              Messages ({{ recentMessages.length }})
-            </ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <div *ngIf="messagesLoading" class="loading">
-              <ion-spinner></ion-spinner>
-              <p>Loading messages...</p>
-            </div>
-            <div *ngIf="!messagesLoading && recentMessages.length === 0" class="empty-state">
-              <ion-icon name="chatbubbles-outline"></ion-icon>
-              <p>No messages yet</p>
-              <p class="empty-hint">Start bidding on requests to connect with karenderias</p>
-            </div>
-            <div *ngIf="!messagesLoading && recentMessages.length > 0">
-              <div class="messages-list">
-                <div 
-                  *ngFor="let msg of recentMessages" 
-                  class="message-item"
-                  [ngClass]="{ 'unread': !msg.is_read }"
-                  (click)="viewConversation(msg)"
-                >
-                  <div class="message-avatar">
-                    <ion-icon name="person-circle"></ion-icon>
-                  </div>
-                  <div class="message-content">
-                    <h5>{{ msg.fromUser?.name || 'Owner' }}</h5>
-                    <p class="message-preview">{{ msg.message | slice:0:50 }}...</p>
-                    <span class="message-date">{{ msg.created_at | date:'short' }}</span>
-                  </div>
-                  <div *ngIf="!msg.is_read" class="unread-badge"></div>
-                </div>
-              </div>
-            </div>
-          </ion-card-content>
-        </ion-card>
+      <div *ngIf="activeTab === 'messages'" class="tab-content messages-tab-content">
+        <app-supplier-messages-panel (unreadTotalChange)="onMessagesUnreadChange($event)"></app-supplier-messages-panel>
       </div>
 
       <!-- Bottom Padding -->
@@ -350,6 +303,11 @@ interface Message {
       font-weight: 500;
     }
 
+    .messages-tab-content {
+      padding: 0 15px 15px;
+      animation: fadeIn 0.3s ease-in;
+    }
+
     .stats-container {
       display: flex;
       justify-content: space-around;
@@ -405,6 +363,29 @@ interface Message {
 
     .tab-segment ion-segment-button ion-icon {
       color: inherit;
+    }
+
+    .messages-tab-btn {
+      position: relative;
+    }
+
+    .segment-unread-pill {
+      position: absolute;
+      top: 2px;
+      right: 6px;
+      z-index: 2;
+      background: #ef4444;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      min-width: 18px;
+      height: 18px;
+      line-height: 18px;
+      text-align: center;
+      border-radius: 999px;
+      padding: 0 5px;
+      box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+      pointer-events: none;
     }
 
     .tab-content {
@@ -778,9 +759,6 @@ export class SupplierHomePage implements OnInit {
   supplierOrders: SupplyOrder[] = [];
   ordersLoading = false;
 
-  // Messages
-  recentMessages: Message[] = [];
-  messagesLoading = false;
   unreadMessages = 0;
 
   private apiUrl = environment.apiUrl;
@@ -788,8 +766,11 @@ export class SupplierHomePage implements OnInit {
   constructor(
     private http: HttpClient,
     private router: Router,
+    private route: ActivatedRoute,
     private authService: AuthService,
-    private inventoryService: InventoryService
+    private inventoryService: InventoryService,
+    private messageService: MessageService,
+    private supplyMessagingService: SupplyOrderMessagingService
   ) {
     this.currentUser = this.authService.getCurrentUser();
   }
@@ -801,18 +782,26 @@ export class SupplierHomePage implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
+    this.route.queryParams.subscribe(params => {
+      if (params['tab']) {
+        this.activeTab = params['tab'];
+      }
+    });
+
     this.loadDashboardData();
   }
 
   onTabChange(event: any) {
     this.activeTab = event.detail.value;
-    console.log('Tab changed to:', this.activeTab);
+    if (this.activeTab === 'messages') {
+      this.loadUnreadCount();
+    }
   }
 
   loadDashboardData() {
     this.loadInventory();
     this.loadSupplierOrders();
-    this.loadRecentMessages();
+    this.loadUnreadCount();
   }
 
   loadInventory() {
@@ -841,6 +830,7 @@ export class SupplierHomePage implements OnInit {
         // API shape across the app typically returns { data: [...] }
         this.supplierOrders = response?.data || response || [];
         this.ordersLoading = false;
+        this.loadUnreadCount();
       },
       error: (err) => {
         console.error('Error loading supplier orders:', err);
@@ -850,31 +840,58 @@ export class SupplierHomePage implements OnInit {
     });
   }
 
-  loadRecentMessages() {
-    this.messagesLoading = true;
-    this.http.get<any>(`${this.apiUrl}/messages/conversations`, {
-      headers: { Authorization: `Bearer ${this.authService.getAuthToken()}` }
-    }).subscribe({
+  onMessagesUnreadChange(total: number) {
+    this.unreadMessages = total;
+  }
+
+  formatUnreadBadge(count: number): string {
+    return count > 99 ? '99+' : String(count);
+  }
+
+  loadUnreadCount() {
+    const userId = Number(this.authService.getCurrentUser()?.id || 0);
+    this.messageService.getUnreadCount().subscribe({
       next: (data) => {
-        this.recentMessages = (data?.messages || []).slice(0, 5);
-        this.messagesLoading = false;
-        this.getUnreadCount();
+        const ingredientUnread = data?.unread_count ?? data?.count ?? 0;
+        this.countSupplyOrderUnread(userId, ingredientUnread);
       },
-      error: (err) => {
-        console.error('Error loading messages:', err);
-        this.messagesLoading = false;
-      }
+      error: (err) => console.error('Error getting unread count:', err)
     });
   }
 
-  getUnreadCount() {
-    this.http.get<any>(`${this.apiUrl}/messages/unread`, {
-      headers: { Authorization: `Bearer ${this.authService.getAuthToken()}` }
-    }).subscribe({
-      next: (data) => {
-        this.unreadMessages = data?.count || 0;
+  private countSupplyOrderUnread(userId: number, ingredientUnread: number) {
+    const seenKarenderia = new Set<number>();
+    const ordersToCheck: SupplyOrder[] = [];
+
+    for (const order of this.supplierOrders) {
+      if (!seenKarenderia.has(order.karenderia_id)) {
+        seenKarenderia.add(order.karenderia_id);
+        ordersToCheck.push(order);
+      }
+    }
+
+    if (!ordersToCheck.length) {
+      this.unreadMessages = ingredientUnread;
+      return;
+    }
+
+    forkJoin(
+      ordersToCheck.map(order =>
+        this.supplyMessagingService.getMessages(order.id).pipe(
+          map(messages =>
+            (messages || []).filter(m => !m.is_read && m.to_user_id === userId).length
+          ),
+          catchError(() => of(0))
+        )
+      )
+    ).subscribe({
+      next: (counts) => {
+        const supplyUnread = counts.reduce((sum, n) => sum + n, 0);
+        this.unreadMessages = ingredientUnread + supplyUnread;
       },
-      error: (err) => console.error('Error getting unread count:', err)
+      error: () => {
+        this.unreadMessages = ingredientUnread;
+      }
     });
   }
 
@@ -897,16 +914,6 @@ export class SupplierHomePage implements OnInit {
     }
     // Inventory Management already has a supplier orders segment; we deep-link to it.
     this.router.navigate(['/inventory-management'], { queryParams: { segment: 'supplier-orders' } });
-  }
-
-  viewConversation(message: Message) {
-    this.router.navigate(['/messages'], { 
-      queryParams: { userId: message.from_user_id } 
-    });
-  }
-
-  goToMessages() {
-    this.router.navigate(['/messages']);
   }
 
   async logout() {
