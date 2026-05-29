@@ -11,7 +11,7 @@ import {
   checkmarkCircleOutline, locationOutline, eye, checkmark, pulseOutline,
   serverOutline, cloudOutline, storefrontOutline, peopleOutline,
   businessOutline, refreshOutline, callOutline, calendarOutline,
-  mailOutline, banOutline, swapHorizontalOutline, trashOutline,
+  mailOutline, banOutline, swapHorizontalOutline,
   checkmarkOutline, mapOutline, people, business, warningOutline,
   alertCircleOutline, pricetagOutline, star, close
 } from 'ionicons/icons';
@@ -90,7 +90,6 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
       mailOutline,
       banOutline,
       swapHorizontalOutline,
-      trashOutline,
       checkmarkOutline,
       mapOutline,
       people,
@@ -308,7 +307,7 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
     }
   }
 
-  async quickApprove(karenderiaId: number) {
+  async quickApprove(karenderiaId: number, currentStatus?: string) {
     const alert = await this.alertCtrl.create({
       header: 'Approve Application',
       message: 'Are you sure you want to approve this karenderia application?',
@@ -335,6 +334,37 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
         }
       ]
     });
+    await alert.present();
+  }
+
+  async reopenKarenderiaApplication(karenderiaId: number) {
+    const alert = await this.alertCtrl.create({
+      header: 'Reopen Application',
+      message: 'Move this rejected application back to pending review?',
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Reopen',
+          handler: () => {
+            this.adminService.updateKarenderiaStatus(karenderiaId, 'pending').subscribe({
+              next: () => {
+                this.showToast('Application reopened for review', 'success');
+                this.loadRecentApplications();
+                this.loadDashboardData();
+              },
+              error: (error) => {
+                console.error('Error reopening application:', error);
+                this.showToast('Error reopening application', 'danger');
+              }
+            });
+          }
+        }
+      ]
+    });
+
     await alert.present();
   }
 
@@ -369,6 +399,40 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
         }
       ]
     });
+    await alert.present();
+  }
+
+  async approveUserAccount(userId: number, userType: string) {
+    const alert = await this.alertCtrl.create({
+      header: 'Approve User',
+      message: 'Approve this account and clear any previous rejection state?',
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        },
+        {
+          text: 'Approve',
+          handler: () => {
+            this.adminService.approveUserAccount(userId).subscribe({
+              next: (response) => {
+                this.showToast(response.message, 'success');
+                if (userType === 'customer') {
+                  this.loadCustomers();
+                } else {
+                  this.loadKarenderiaOwners();
+                }
+              },
+              error: (error) => {
+                console.error('Error approving user account:', error);
+                this.showToast('Error approving user account', 'danger');
+              }
+            });
+          }
+        }
+      ]
+    });
+
     await alert.present();
   }
 
@@ -423,44 +487,12 @@ export class AdminDashboardPage implements OnInit, OnDestroy {
     await alert.present();
   }
 
-  async deleteUser(userId: number, userName: string, userType: string) {
-    const alert = await this.alertCtrl.create({
-      header: 'Delete User',
-      message: `Are you sure you want to delete ${userName}? This action cannot be undone.`,
-      buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel'
-        },
-        {
-          text: 'Delete',
-          role: 'destructive',
-          handler: () => {
-            this.adminService.deleteUser(userId).subscribe({
-              next: (response) => {
-                this.showToast(response.message, 'success');
-                // Reload the appropriate data
-                if (userType === 'customer') {
-                  this.loadCustomers();
-                } else {
-                  this.loadKarenderiaOwners();
-                }
-                this.loadDashboardData();
-              },
-              error: (error) => {
-                console.error('Error deleting user:', error);
-                this.showToast('Error deleting user', 'danger');
-              }
-            });
-          }
-        }
-      ]
-    });
-    await alert.present();
-  }
-
   approveKarenderia(karenderia: any) {
     this.quickApprove(karenderia.id);
+  }
+
+  isUserDisabled(user: any): boolean {
+    return !!user?.disabled_at || user?.status === 'disabled';
   }
 
   getOwnerStatusColor(owner: any): string {

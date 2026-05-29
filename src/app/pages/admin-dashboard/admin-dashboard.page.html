@@ -310,9 +310,9 @@
                 <div class="user-basic-info">
                   <h3>{{customer.name}}</h3>
                   <p>{{customer.email}}</p>
-                  <ion-chip [color]="customer.status === 'verified' ? 'success' : 'warning'" class="status-chip">
-                    <ion-icon [name]="customer.status === 'verified' ? 'checkmark-circle' : 'time'"></ion-icon>
-                    <ion-label>{{customer.status}}</ion-label>
+                  <ion-chip [color]="isUserDisabled(customer) ? 'medium' : (customer.status === 'verified' ? 'success' : customer.status === 'rejected' ? 'danger' : 'warning')" class="status-chip">
+                    <ion-icon [name]="isUserDisabled(customer) ? 'ban' : (customer.status === 'verified' ? 'checkmark-circle' : customer.status === 'rejected' ? 'close-circle' : 'time')"></ion-icon>
+                    <ion-label>{{isUserDisabled(customer) ? 'disabled' : customer.status}}</ion-label>
                   </ion-chip>
                 </div>
                 <div class="user-stats-summary">
@@ -345,27 +345,20 @@
               <div class="user-actions-grid">
                 <ion-button 
                   size="small" 
+                  fill="outline"
+                  color="success"
+                  *ngIf="customer.status !== 'verified' && !isUserDisabled(customer)"
+                  (click)="approveUserAccount(customer.id, 'customer')">
+                  <ion-icon name="checkmark-circle" slot="start"></ion-icon>
+                  Approve
+                </ion-button>
+                <ion-button 
+                  size="small" 
                   fill="solid"
-                  [color]="customer.status === 'verified' ? 'warning' : 'success'"
+                  [color]="isUserDisabled(customer) ? 'success' : 'warning'"
                   (click)="toggleUserStatus(customer.id, 'customer')">
-                  <ion-icon [name]="customer.status === 'verified' ? 'ban' : 'checkmark-circle'" slot="start"></ion-icon>
-                  {{customer.status === 'verified' ? 'Disable' : 'Enable'}}
-                </ion-button>
-                <ion-button 
-                  size="small" 
-                  fill="outline" 
-                  color="tertiary"
-                  (click)="changeUserRole(customer.id, customer.name)">
-                  <ion-icon name="swap-horizontal" slot="start"></ion-icon>
-                  Change Role
-                </ion-button>
-                <ion-button 
-                  size="small" 
-                  fill="outline" 
-                  color="danger"
-                  (click)="deleteUser(customer.id, customer.name, 'customer')">
-                  <ion-icon name="trash" slot="start"></ion-icon>
-                  Delete
+                  <ion-icon [name]="isUserDisabled(customer) ? 'checkmark-circle' : 'ban'" slot="start"></ion-icon>
+                  {{isUserDisabled(customer) ? 'Enable' : 'Disable'}}
                 </ion-button>
               </div>
             </ion-card-content>
@@ -410,9 +403,9 @@
                 <div class="user-basic-info">
                   <h3>{{owner.name}}</h3>
                   <p>{{owner.email}}</p>
-                  <ion-chip [color]="getOwnerStatusColor(owner)" class="status-chip">
-                    <ion-icon [name]="owner.status === 'verified' ? 'checkmark-circle' : 'time'"></ion-icon>
-                    <ion-label>{{getOwnerStatusText(owner)}}</ion-label>
+                  <ion-chip [color]="isUserDisabled(owner) ? 'medium' : (owner.status === 'verified' ? 'success' : owner.status === 'rejected' ? 'danger' : 'warning')" class="status-chip">
+                    <ion-icon [name]="isUserDisabled(owner) ? 'ban' : (owner.status === 'verified' ? 'checkmark-circle' : owner.status === 'rejected' ? 'close-circle' : 'time')"></ion-icon>
+                    <ion-label>{{isUserDisabled(owner) ? 'disabled' : owner.status}}</ion-label>
                   </ion-chip>
                 </div>
                 <div class="business-summary" *ngIf="owner.karenderia">
@@ -455,6 +448,15 @@
               <div class="user-actions-grid">
                 <ion-button 
                   size="small" 
+                  fill="outline"
+                  color="success"
+                  *ngIf="owner.status !== 'verified' && !isUserDisabled(owner)"
+                  (click)="approveUserAccount(owner.id, 'owner')">
+                  <ion-icon name="checkmark-circle" slot="start"></ion-icon>
+                  Approve
+                </ion-button>
+                <ion-button 
+                  size="small" 
                   fill="solid"
                   color="success"
                   *ngIf="owner.karenderia?.status === 'pending'"
@@ -474,26 +476,10 @@
                 <ion-button 
                   size="small" 
                   fill="solid"
-                  [color]="owner.status === 'verified' ? 'warning' : 'success'"
+                  [color]="isUserDisabled(owner) ? 'success' : 'warning'"
                   (click)="toggleUserStatus(owner.id, 'owner')">
-                  <ion-icon [name]="owner.status === 'verified' ? 'ban' : 'checkmark-circle'" slot="start"></ion-icon>
-                  {{owner.status === 'verified' ? 'Disable' : 'Enable'}}
-                </ion-button>
-                <ion-button 
-                  size="small" 
-                  fill="outline" 
-                  color="tertiary"
-                  (click)="changeUserRole(owner.id, owner.name)">
-                  <ion-icon name="swap-horizontal" slot="start"></ion-icon>
-                  Change Role
-                </ion-button>
-                <ion-button 
-                  size="small" 
-                  fill="outline" 
-                  color="danger"
-                  (click)="deleteUser(owner.id, owner.name, 'owner')">
-                  <ion-icon name="trash" slot="start"></ion-icon>
-                  Delete
+                  <ion-icon [name]="isUserDisabled(owner) ? 'checkmark-circle' : 'ban'" slot="start"></ion-icon>
+                  {{isUserDisabled(owner) ? 'Enable' : 'Disable'}}
                 </ion-button>
               </div>
             </ion-card-content>
@@ -541,8 +527,8 @@
                     <p>{{application.owner_name}} • {{application.owner_email}}</p>
                   </div>
                 </div>
-                <ion-chip [color]="application.status === 'approved' ? 'success' : 'warning'" class="application-status-chip">
-                  <ion-icon [name]="application.status === 'approved' ? 'checkmark-circle' : 'time'"></ion-icon>
+                <ion-chip [color]="application.status === 'approved' ? 'success' : application.status === 'rejected' ? 'danger' : 'warning'" class="application-status-chip">
+                  <ion-icon [name]="application.status === 'approved' ? 'checkmark-circle' : application.status === 'rejected' ? 'close-circle' : 'time'"></ion-icon>
                   <ion-label>{{application.status}}</ion-label>
                 </ion-chip>
               </div>
@@ -566,14 +552,33 @@
                 </div>
               </div>
 
-              <div class="application-actions-grid" *ngIf="application.status === 'pending'">
+              <div class="application-actions-grid" *ngIf="application.status === 'pending' || application.status === 'rejected'">
                 <ion-button 
                   fill="solid" 
                   color="success"
                   expand="block"
-                  (click)="quickApprove(application.id)">
+                  (click)="quickApprove(application.id, application.status)">
                   <ion-icon name="checkmark" slot="start"></ion-icon>
-                  Quick Approve
+                  {{ application.status === 'rejected' ? 'Approve Anyway' : 'Quick Approve' }}
+                </ion-button>
+                <ion-button 
+                  fill="outline" 
+                  color="primary"
+                  expand="block"
+                  routerLink="/admin-location-management">
+                  <ion-icon name="eye" slot="start"></ion-icon>
+                  Review Details
+                </ion-button>
+              </div>
+
+              <div class="application-actions-grid" *ngIf="application.status === 'rejected'">
+                <ion-button 
+                  fill="solid" 
+                  color="primary"
+                  expand="block"
+                  (click)="reopenKarenderiaApplication(application.id)">
+                  <ion-icon name="refresh" slot="start"></ion-icon>
+                  Reopen Application
                 </ion-button>
                 <ion-button 
                   fill="outline" 

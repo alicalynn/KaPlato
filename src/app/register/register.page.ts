@@ -67,6 +67,7 @@ export class RegisterPage implements OnInit {
       this.isLoading = true;
       this.errorMessage = '';
       this.successMessage = '';
+      const submittedAccountType = this.registerData.accountType;
 
       try {
         if (this.registerData.accountType === 'karenderia_owner') {
@@ -140,11 +141,11 @@ export class RegisterPage implements OnInit {
         form.resetForm();
         
         // Auto-navigate to login after 2 seconds for karenderia owners and suppliers
-        if (this.registerData.accountType === 'karenderia_owner' || this.registerData.accountType === 'supplier') {
+        if (submittedAccountType === 'karenderia_owner' || submittedAccountType === 'supplier') {
           setTimeout(() => {
             this.router.navigate(['/login']);
           }, 2000);
-        } else if (this.registerData.accountType === 'customer') {
+        } else if (submittedAccountType === 'customer') {
           // For customers, navigate to home (already logged in) after 1 second
           setTimeout(() => {
             this.router.navigate(['/home']);

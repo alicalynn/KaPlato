@@ -177,6 +177,12 @@ export class AdminService {
     });
   }
 
+  approveUserAccount(userId: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/admin/users/${userId}/approve`, {}, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
   toggleUserStatus(userId: number): Observable<any> {
     return this.http.put(`${this.apiUrl}/admin/users/${userId}/toggle-status`, {}, {
       headers: this.getAuthHeaders()
