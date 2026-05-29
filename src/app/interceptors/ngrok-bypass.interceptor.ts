@@ -1,13 +1,9 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 
+/**
+ * No longer needed - removed ngrok tunnel dependency
+ * Now using localhost:8000 instead
+ */
 export const ngrokBypassInterceptor: HttpInterceptorFn = (req, next) => {
-  if (req.url.includes('.ngrok-free.dev')) {
-    req = req.clone({
-      setHeaders: {
-        'ngrok-skip-browser-warning': 'true'
-      }
-    });
-  }
-
   return next(req);
 };

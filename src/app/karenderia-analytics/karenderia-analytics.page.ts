@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AnalyticsService } from '../services/analytics.service';
+import { KarenderiaInfoService } from '../services/karenderia-info.service';
 import { ToastController } from '@ionic/angular';
 import { SalesAnalytics } from '../models/menu.model';
 
@@ -38,6 +39,7 @@ export class KarenderiaAnalyticsPage implements OnInit {
   
   constructor(
     private analyticsService: AnalyticsService,
+    private karenderiaInfoService: KarenderiaInfoService,
     private toastController: ToastController
   ) { }
 
@@ -50,19 +52,40 @@ export class KarenderiaAnalyticsPage implements OnInit {
   async ngOnInit() {
     this.currentSeason = this.getCurrentSeason();
     this.seasonalRecommendations = this.analyticsService.getSeasonalRecommendations(this.currentSeason);
-    
+    await this.karenderiaInfoService.reloadKarenderiaData();
+    await this.refreshAnalytics();
+  }
+
+  async ionViewWillEnter() {
+    await this.refreshAnalytics();
+  }
+
+  private getKarenderiaId(): string {
+    const karenderia = this.karenderiaInfoService.getCurrentKarenderia();
+    return karenderia?.id != null ? String(karenderia.id) : '';
+  }
+
+  async refreshAnalytics() {
     await this.loadAllAnalytics();
     await this.loadSeasonalTrends();
   }
 
   async loadAllAnalytics() {
-    const karenderiaId = 'karenderia-id'; // Replace with actual ID
-    
+    const karenderiaId = this.getKarenderiaId();
+
+    if (!karenderiaId) {
+      this.dailyAnalytics = null;
+      this.weeklyAnalytics = null;
+      this.monthlyAnalytics = null;
+      this.updateChartData();
+      return;
+    }
+
     try {
       this.dailyAnalytics = await this.analyticsService.getSalesAnalytics(karenderiaId, 'daily');
       this.weeklyAnalytics = await this.analyticsService.getSalesAnalytics(karenderiaId, 'weekly');
       this.monthlyAnalytics = await this.analyticsService.getSalesAnalytics(karenderiaId, 'monthly');
-      
+
       this.updateChartData();
     } catch (error) {
       console.error('Error loading analytics:', error);
@@ -74,12 +97,18 @@ export class KarenderiaAnalyticsPage implements OnInit {
   }
 
   async loadSeasonalTrends() {
-    const karenderiaId = 'karenderia-id'; // Replace with actual ID
-    
+    const karenderiaId = this.getKarenderiaId();
+
+    if (!karenderiaId) {
+      this.seasonalTrends = [];
+      return;
+    }
+
     try {
       this.seasonalTrends = await this.analyticsService.getPopularItemsBySeason(karenderiaId, this.currentSeason);
     } catch (error) {
       console.error('Error loading seasonal trends:', error);
+      this.seasonalTrends = [];
     }
   }
 

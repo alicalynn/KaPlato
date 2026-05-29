@@ -495,16 +495,6 @@
         <div class="card-actions">
           <ion-button
             fill="outline"
-            color="secondary"
-            (click)="messageSupplier(order)">
-            <ion-icon name="chatbubbles-outline" slot="start"></ion-icon>
-            Message
-            <ion-badge *ngIf="getUnreadMessageCount(order.id) > 0" color="danger">
-              {{ getUnreadMessageCount(order.id) }}
-            </ion-badge>
-          </ion-button>
-          <ion-button
-            fill="outline"
             color="success"
             [disabled]="order.status !== 'delivering'"
             (click)="markOwnerOrderAsDelivered(order)">
@@ -658,6 +648,17 @@
               <div class="stat-number text-success">{{ getSupplierOrderCountByStatus('delivered') }}</div>
             </div>
           </div>
+          <div style="border-top: 1px solid rgba(0, 0, 0, 0.1); margin: 12px 0;"></div>
+          <div class="profit-summary">
+            <div class="profit-stat">
+              <div class="profit-label">Total Profit</div>
+              <div class="profit-amount" [style.color]="'#10b981'">{{ formatPhp(calculateTotalSupplierProfit()) }}</div>
+            </div>
+            <div class="profit-stat">
+              <div class="profit-label">Avg Profit/Order</div>
+              <div class="profit-amount" [style.color]="'#3b82f6'">{{ formatPhp(calculateAverageOrderProfit()) }}</div>
+            </div>
+          </div>
         </ion-card-content>
       </ion-card>
     </div>
@@ -689,6 +690,7 @@
       <ion-card-content>
         <p><strong>Items:</strong> {{ formatOrderItems(order) }}</p>
         <p><strong>Total:</strong> ₱{{ order.total_amount | number:'1.2-2' }}</p>
+        <p><strong>Profit:</strong> <ion-text color="success"><strong>{{ formatPhp(calculateOrderProfit(order)) }}</strong></ion-text> ({{ calculateOrderProfitPercentage(order) | number:'1.1-1' }}%)</p>
         <p><strong>Payment:</strong> {{ getPaymentMethodLabel(order.payment_method) }}</p>
         <p><strong>Date:</strong> {{ order.created_at | date:'mediumDate' }}</p>
         <div class="card-actions">
@@ -716,16 +718,6 @@
             (click)="updateSupplierOrderStatus(order, 'delivered')">
             <ion-icon name="cube-outline" slot="start"></ion-icon>
             Mark Delivered
-          </ion-button>
-          <ion-button
-            fill="outline"
-            color="secondary"
-            (click)="messageOrderOwner(order)">
-            <ion-icon name="chatbubbles-outline" slot="start"></ion-icon>
-            Message
-            <ion-badge *ngIf="getUnreadMessageCount(order.id) > 0" color="danger">
-              {{ getUnreadMessageCount(order.id) }}
-            </ion-badge>
           </ion-button>
           <ion-button
             fill="outline"

@@ -5,13 +5,12 @@ export const environment = {
   
   // Option 1: Local machine only (default)
   apiUrl: 'http://localhost:8000/api',
-  // apiUrl: 'https://bodacious-cascade-onshore.ngrok-free.dev/api',
   
   // Option 2: Local network (other devices on same WiFi)
-  // apiUrl: 'http://172.20.10.9:8000/api',
+  // apiUrl: 'http://192.168.1.x:8000/api', // Replace with your local IP
   
-  // Option 3: Public access via playit.gg (when tunnel is running)
-  // apiUrl: 'https://your-tunnel-name.playit.gg/api',
+  // Option 3: If running on different machine on local network
+  // apiUrl: 'http://192.168.1.100:8000/api',
   
   spoonacular: {
     apiKey: 'dd401666a6f944fabefcc73a78db06c7',

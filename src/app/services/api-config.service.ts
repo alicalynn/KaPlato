@@ -15,9 +15,7 @@ export class ApiConfigService {
    */
   getApiUrl(): string {
     const scannedUrl = this.qrScannerService.getBackendUrl();
-    const isLocalFrontend = typeof window !== 'undefined' && window.location?.hostname === 'localhost';
-    const shouldIgnoreNgrok = isLocalFrontend && !!scannedUrl && scannedUrl.includes('.ngrok-free.dev');
-    const url = shouldIgnoreNgrok ? environment.apiUrl : (scannedUrl || environment.apiUrl);
+    const url = scannedUrl || environment.apiUrl;
     console.log('🌐 ApiConfigService.getApiUrl() -> scanned:', scannedUrl, 'final:', url);
     return url;
   }
@@ -28,11 +26,7 @@ export class ApiConfigService {
    */
   getApiUrl$(): Observable<string> {
     return this.qrScannerService.backendUrl$.pipe(
-      map(scannedUrl => {
-        const isLocalFrontend = typeof window !== 'undefined' && window.location?.hostname === 'localhost';
-        const shouldIgnoreNgrok = isLocalFrontend && !!scannedUrl && scannedUrl.includes('.ngrok-free.dev');
-        return shouldIgnoreNgrok ? environment.apiUrl : (scannedUrl || environment.apiUrl);
-      }),
+      map(scannedUrl => scannedUrl || environment.apiUrl),
       startWith(this.getApiUrl())
     );
   }

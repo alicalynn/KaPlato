@@ -1,7 +1,37 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+
+/** Laravel paginate() wraps rows in { data: { data: [...] } } — always return a plain array. */
+export function extractConversationList(response: any): Conversation[] {
+  if (!response) {
+    return [];
+  }
+  const payload = response.data !== undefined ? response.data : response;
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+  if (payload && Array.isArray(payload.data)) {
+    return payload.data;
+  }
+  return [];
+}
+
+export function extractMessageList(response: any): Message[] {
+  if (!response) {
+    return [];
+  }
+  const payload = response.data !== undefined ? response.data : response;
+  if (Array.isArray(payload)) {
+    return payload;
+  }
+  if (payload && Array.isArray(payload.data)) {
+    return payload.data;
+  }
+  return [];
+}
 
 export interface Message {
   id: number;
@@ -111,11 +141,11 @@ export class MessageService {
   /**
    * Get all conversations
    */
-  getConversations(page: number = 1): Observable<any> {
+  getConversations(page: number = 1): Observable<Conversation[]> {
     return this.http.get(`${this.apiUrl}/messages/conversations`, {
       headers: this.getHeaders(),
       params: { page: page.toString() }
-    });
+    }).pipe(map(response => extractConversationList(response)));
   }
 
   /**

@@ -1,23 +1,21 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { IonicModule, IonContent, AlertController, ToastController } from '@ionic/angular';
+import { IonicModule, AlertController, ToastController } from '@ionic/angular';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Location } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../services/auth.service';
-import { MessageService, Message } from '../../services/message.service';
 import { addIcons } from 'ionicons';
 import { 
   checkmarkOutline, 
   closeOutline, 
-  sendOutline, 
-  callOutline,
   checkmarkDoneOutline,
   arrowBackOutline,
   timeOutline,
-  checkmarkCircleOutline
+  checkmarkCircleOutline,
+  chatbubblesOutline
 } from 'ionicons/icons';
 
 interface SupplierQuote {
@@ -65,19 +63,12 @@ interface IngredientRequest {
   imports: [CommonModule, FormsModule, IonicModule, RouterModule]
 })
 export class SupplierRequestDetailPage implements OnInit {
-  @ViewChild('messageContent') messageContent!: IonContent;
-
   requestId!: number;
   currentUserId = 0;
   ingredientRequest: IngredientRequest | null = null;
   myQuote: SupplierQuote | undefined;
-  conversationMessages: Message[] = [];
   
   isLoadingRequest = true;
-  isLoadingMessages = false;
-  isSendingMessage = false;
-  
-  newMessage = '';
   ownerName = '';
   ownerId = 0;
 
@@ -91,15 +82,13 @@ export class SupplierRequestDetailPage implements OnInit {
     private location: Location,
     private http: HttpClient,
     private authService: AuthService,
-    private messageService: MessageService,
     private alertController: AlertController,
     private toastController: ToastController
   ) {
     addIcons({
       'checkmark-outline': checkmarkOutline,
       'close-outline': closeOutline,
-      'send-outline': sendOutline,
-      'call-outline': callOutline,
+      'chatbubbles-outline': chatbubblesOutline,
       'checkmark-done-outline': checkmarkDoneOutline,
       'arrow-back-outline': arrowBackOutline,
       'time-outline': timeOutline,
@@ -150,11 +139,6 @@ export class SupplierRequestDetailPage implements OnInit {
           this.checkAcceptanceStatus();
 
           this.isLoadingRequest = false;
-
-          // Load messages if we have owner ID
-          if (this.ownerId && this.requestId) {
-            this.loadMessages();
-          }
         },
         error: (error) => {
           console.error('Error loading request:', error);
@@ -164,51 +148,19 @@ export class SupplierRequestDetailPage implements OnInit {
       });
   }
 
-  loadMessages() {
-    if (!this.ownerId || !this.requestId) return;
-
-    this.isLoadingMessages = true;
-    this.messageService.getConversation(this.requestId, this.ownerId).subscribe({
-      next: (response: any) => {
-        this.conversationMessages = response?.data || [];
-        this.isLoadingMessages = false;
-        this.scrollToBottom();
-      },
-      error: (error) => {
-        console.error('Error loading messages:', error);
-        this.isLoadingMessages = false;
+  openInMessages() {
+    if (!this.ownerId || !this.requestId) {
+      this.showToast('Owner contact is not available yet');
+      return;
+    }
+    this.router.navigate(['/supplier-home'], {
+      queryParams: {
+        tab: 'messages',
+        requestId: this.requestId,
+        userId: this.ownerId
       }
     });
   }
-
-  sendMessage() {
-    if (!this.newMessage.trim() || !this.ownerId) return;
-
-    this.isSendingMessage = true;
-    const messageData = {
-      to_user_id: this.ownerId,
-      ingredient_request_id: this.requestId,
-      message: this.newMessage.trim(),
-      type: 'text' as const
-    };
-
-    this.messageService.sendMessage(messageData).subscribe({
-      next: (response) => {
-        this.conversationMessages.push(response.data);
-        this.newMessage = '';
-        this.isSendingMessage = false;
-        this.scrollToBottom();
-        this.showToast('Message sent');
-      },
-      error: (error) => {
-        console.error('Error sending message:', error);
-        this.isSendingMessage = false;
-        this.showToast('Failed to send message');
-      }
-    });
-  }
-
-
 
   // Note: acceptQuoteResponse() method removed. Owner is responsible for accepting quotes, not the supplier.
   // Supplier submits quote (pending) -> Waits for owner -> Owner accepts (accepted) -> Supplier delivers
@@ -319,32 +271,6 @@ export class SupplierRequestDetailPage implements OnInit {
       this.ingredientRequest.status === 'accepted' &&
       this.myQuote.status === 'accepted' &&
       this.ingredientRequest.acceptedSupplier?.id === this.currentUserId;
-  }
-
-  isMessageFromCurrentUser(message: Message): boolean {
-    return message.from_user_id === this.currentUserId;
-  }
-
-  formatTime(dateString: string): string {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 1) return 'now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-
-    return date.toLocaleDateString();
-  }
-
-  private scrollToBottom() {
-    setTimeout(() => {
-      this.messageContent?.scrollToBottom(300);
-    }, 100);
   }
 
   private async showToast(message: string) {

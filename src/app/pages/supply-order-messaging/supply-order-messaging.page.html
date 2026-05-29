@@ -1,4 +1,4 @@
-<ion-header [translucent]="true">
+<ion-header [translucent]="true" *ngIf="!embeddedMode">
   <ion-toolbar>
     <ion-buttons slot="end">
       <ion-button (click)="dismissModal()">
@@ -16,12 +16,17 @@
 
 <ion-content [fullscreen]="false" class="messaging-content">
   <div class="messages-container" #messageContainer>
-    <div *ngIf="messages.length === 0" class="no-messages">
+    <div *ngIf="isLoadingMessages" class="no-messages">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Loading messages...</p>
+    </div>
+    <div *ngIf="!isLoadingMessages && messages.length === 0" class="no-messages">
       <ion-icon name="chatbubbles-outline" size="large"></ion-icon>
       <p>No messages yet. Start the conversation!</p>
     </div>
 
-    <div *ngFor="let message of messages" 
+    <ng-container *ngIf="!isLoadingMessages">
+    <div *ngFor="let message of messages"
          [class.message-item]="true"
          [class.sent]="isSentByCurrentUser(message)"
          [class.received]="!isSentByCurrentUser(message)">
@@ -33,6 +38,7 @@
         <div class="message-time">{{ message.created_at | date:'short' }}</div>
       </div>
     </div>
+    </ng-container>
   </div>
 
   <div class="message-input-area">

@@ -10,6 +10,9 @@
       </div>
     </div>
     <div class="mobile-actions">
+      <ion-button fill="clear" size="small" (click)="goTo('messages', $event)">
+        <ion-icon name="chatbubbles-outline" slot="icon-only"></ion-icon>
+      </ion-button>
       <ion-button fill="clear" size="small" (click)="goTo('profile', $event)">
         <ion-icon name="person-circle-outline" slot="icon-only"></ion-icon>
       </ion-button>
@@ -56,6 +59,11 @@
       <a class="nav-item" href="#" [class.active]="isActive('analytics')" (click)="goTo('analytics', $event)">
         <ion-icon name="analytics-outline"></ion-icon>
         <span>Analytics</span>
+      </a>
+      <a class="nav-item" href="#" [class.active]="isActive('messages')" (click)="goTo('messages', $event)">
+        <ion-icon name="chatbubbles-outline"></ion-icon>
+        <span>Messages</span>
+        <span *ngIf="unreadMessageCount > 0" class="unread-badge">{{ unreadMessageCount }}</span>
       </a>
       <a class="nav-item" href="#" [class.active]="isActive('profile')" (click)="goTo('profile', $event)">
         <ion-icon name="person-outline"></ion-icon>

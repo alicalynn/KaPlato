@@ -9,6 +9,7 @@ export const environment = {
     enableDebugMode: false,
     lazyLoadDelay: 100
   },
+  // apiUrl is set to localhost:8000 (can be overridden via .env)
   apiUrl: 'http://localhost:8000/api',
   // apiUrl: 'https://bodacious-cascade-onshore.ngrok-free.dev/api',
   spoonacular: {

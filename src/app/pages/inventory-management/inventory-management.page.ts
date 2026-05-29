@@ -15,7 +15,6 @@ import {
 } from '../../services/inventory.service';
 import { AuthService } from '../../services/auth.service';
 import { SupplyOrderMessagingService } from '../../services/supply-order-messaging.service';
-import { SupplyOrderMessagingPage } from '../supply-order-messaging/supply-order-messaging.page';
 import { SupplyOrderPaymentModalPage } from '../supply-order-payment-modal/supply-order-payment-modal.page';
 import { OwnerShellComponent } from '../../components/owner-shell/owner-shell.component';
 
@@ -623,6 +622,74 @@ export class InventoryManagementPage implements OnInit {
       .join(', ');
   }
 
+  /**
+   * Calculate profit for a supply order
+   * Profit = Total Amount - Cost
+   * Cost is calculated using standard markup (40% margin - cost is 60% of retail)
+   * @param order Supply order to calculate profit for
+   * @returns Profit amount in PHP
+   */
+  calculateOrderProfit(order: SupplyOrder): number {
+    if (!order || !order.items || order.total_amount <= 0) {
+      return 0;
+    }
+
+    // Calculate total cost using standard markup assumption (60% of selling price)
+    const totalCost = order.total_amount * 0.6; // 40% markup = 60% cost
+    const profit = order.total_amount - totalCost;
+    
+    return Math.max(0, profit);
+  }
+
+  /**
+   * Calculate profit percentage for a supply order
+   * @param order Supply order to calculate profit percentage for
+   * @returns Profit percentage (0-100)
+   */
+  calculateOrderProfitPercentage(order: SupplyOrder): number {
+    if (!order || order.total_amount <= 0) {
+      return 0;
+    }
+
+    const profit = this.calculateOrderProfit(order);
+    return (profit / order.total_amount) * 100;
+  }
+
+  /**
+   * Calculate total profit for supplier across all orders
+   * @returns Total profit across all supplier orders
+   */
+  calculateTotalSupplierProfit(): number {
+    return this.supplierOrders.reduce((total, order) => {
+      return total + this.calculateOrderProfit(order);
+    }, 0);
+  }
+
+  /**
+   * Calculate average profit per order
+   * @returns Average profit amount
+   */
+  calculateAverageOrderProfit(): number {
+    if (this.supplierOrders.length === 0) {
+      return 0;
+    }
+    return this.calculateTotalSupplierProfit() / this.supplierOrders.length;
+  }
+
+  /**
+   * Format profit amount to PHP currency
+   * @param amount Amount to format
+   * @returns Formatted PHP currency string
+   */
+  formatPhp(amount: number): string {
+    return new Intl.NumberFormat('en-PH', {
+      style: 'currency',
+      currency: 'PHP',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
+  }
+
   addToCart(listing: SupplierListing) {
     if (listing.available_stock <= 0) {
       this.showToast('This listing is out of stock', 'warning');
@@ -865,42 +932,6 @@ export class InventoryManagementPage implements OnInit {
     } finally {
       loading.dismiss();
     }
-  }
-
-  async messageOrderOwner(order: SupplyOrder) {
-    const modal = await this.modalController.create({
-      component: SupplyOrderMessagingPage,
-      componentProps: {
-        orderId: order.id,
-        supplierId: order.supplier_id,
-        karenderiaId: order.karenderia_id,
-        otherPartyName: order.karenderia?.business_name || order.karenderia?.name || 'Karenderia Owner',
-        onDismiss: () => this.refreshUnreadCount(order.id)
-      },
-      cssClass: 'messaging-modal',
-      breakpoints: [0, 0.5, 1],
-      initialBreakpoint: 1
-    });
-
-    return await modal.present();
-  }
-
-  async messageSupplier(order: SupplyOrder) {
-    const modal = await this.modalController.create({
-      component: SupplyOrderMessagingPage,
-      componentProps: {
-        orderId: order.id,
-        supplierId: order.supplier_id,
-        karenderiaId: order.karenderia_id,
-        otherPartyName: order.supplier?.name || 'Supplier',
-        onDismiss: () => this.refreshUnreadCount(order.id)
-      },
-      cssClass: 'messaging-modal',
-      breakpoints: [0, 0.5, 1],
-      initialBreakpoint: 1
-    });
-
-    return await modal.present();
   }
 
   async addSupplierListing() {

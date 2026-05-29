@@ -7,6 +7,7 @@ import { InventoryManagementService } from '../../services/inventory-management.
 import { AdvancedAnalyticsService } from '../../services/advanced-analytics.service';
 import { POSService } from '../../services/pos.service';
 import { KarenderiaReviewService } from '../../services/karenderia-review.service';
+import { SupplyOrderMessagingService } from '../../services/supply-order-messaging.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { 
@@ -30,7 +31,8 @@ import {
   IonProgressBar,
   IonFab,
   IonFabButton,
-  IonFabList
+  IonFabList,
+  IonBadge
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { 
@@ -152,7 +154,8 @@ interface Karenderia {
     IonProgressBar,
     IonFab,
     IonFabButton,
-    IonFabList
+    IonFabList,
+    IonBadge
   ]
 })
 export class KarenderiaDashboardPage implements OnInit, AfterViewInit {
@@ -192,6 +195,10 @@ export class KarenderiaDashboardPage implements OnInit, AfterViewInit {
   reviewSortBy = 'newest';
   Math = Math;
 
+  // Supplier Messages Data
+  supplierMessages: any[] = [];
+  unreadMessagesCount = 0;
+
   constructor(
     private loadingController: LoadingController,
     private toastController: ToastController,
@@ -203,13 +210,15 @@ export class KarenderiaDashboardPage implements OnInit, AfterViewInit {
     private inventoryService: InventoryManagementService,
     private analyticsService: AdvancedAnalyticsService,
     private posService: POSService,
-    private reviewService: KarenderiaReviewService
+    private reviewService: KarenderiaReviewService,
+    private messagingService: SupplyOrderMessagingService
   ) { }
 
   ngOnInit() {
     this.loadKarenderiaStatus();
     this.loadDashboardData();
     this.loadReviews();
+    this.loadSupplierMessages();
   }
 
   ngAfterViewInit() {
@@ -588,5 +597,50 @@ export class KarenderiaDashboardPage implements OnInit, AfterViewInit {
   async viewAllReviews() {
     // Navigate to reviews management page (if available) or open detailed modal
     this.router.navigate(['/karenderia-reviews-management']);
+  }
+
+  /**
+   * Load recent supplier messages for the karenderia
+   */
+  async loadSupplierMessages() {
+    try {
+      // For now, initialize empty messages - will be populated when integrated with messaging service
+      this.supplierMessages = [];
+      this.unreadMessagesCount = 0;
+      
+      // TODO: Integrate with SupplyOrderMessagingService when available
+      // const messages = await this.messagingService.getMessagesForKarenderia().toPromise();
+      // if (messages?.data) {
+      //   this.supplierMessages = messages.data.slice(0, 5);
+      //   this.unreadMessagesCount = this.supplierMessages.filter(m => !m.read).length;
+      // }
+    } catch (error) {
+      console.error('Error loading supplier messages:', error);
+      this.supplierMessages = [];
+      this.unreadMessagesCount = 0;
+    }
+  }
+
+  /**
+   * Reply to a supplier message
+   */
+  async replyToSupplier(message: any) {
+    if (message.supply_order_id) {
+      this.router.navigate(['/inventory-management'], {
+        queryParams: {
+          segment: 'owner-orders',
+          openMessaging: message.supply_order_id
+        }
+      });
+    }
+  }
+
+  /**
+   * View all messages from suppliers
+   */
+  viewAllMessages() {
+    this.router.navigate(['/inventory-management'], {
+      queryParams: { segment: 'owner-orders' }
+    });
   }
 }

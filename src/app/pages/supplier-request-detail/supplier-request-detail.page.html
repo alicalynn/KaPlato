@@ -148,60 +148,10 @@
       </ion-button>
     </div>
 
-    <!-- Messaging Section -->
-    <ion-card class="messaging-card">
-      <ion-card-header>
-        <h5>Conversation with {{ ownerName }}</h5>
-      </ion-card-header>
-
-      <ion-card-content class="message-area">
-        <div *ngIf="isLoadingMessages" class="loading">
-          <ion-spinner></ion-spinner>
-        </div>
-
-        <div *ngIf="!isLoadingMessages && conversationMessages.length === 0" class="empty-messages">
-          <ion-icon name="chatbubble-outline"></ion-icon>
-          <p>No messages yet. Start the conversation!</p>
-        </div>
-
-        <div #messageContent class="messages-list" *ngIf="!isLoadingMessages && conversationMessages.length > 0">
-          <div 
-            *ngFor="let msg of conversationMessages"
-            class="message-bubble"
-            [class.from-current]="isMessageFromCurrentUser(msg)"
-            [class.from-other]="!isMessageFromCurrentUser(msg)">
-            
-            <div class="message-content">
-              <p>{{ msg.message }}</p>
-              <small class="message-time">{{ formatTime(msg.created_at) }}</small>
-            </div>
-
-            <ion-icon 
-              *ngIf="isMessageFromCurrentUser(msg) && msg.is_read"
-              name="checkmark-done-outline" 
-              class="read-receipt"></ion-icon>
-          </div>
-        </div>
-      </ion-card-content>
-
-      <div class="message-input-area">
-        <ion-item>
-          <ion-input
-            [(ngModel)]="newMessage"
-            placeholder="Type a message..."
-            (keyup.enter)="sendMessage()"
-            [disabled]="isSendingMessage">
-          </ion-input>
-          <ion-button 
-            slot="end"
-            fill="clear"
-            (click)="sendMessage()"
-            [disabled]="!newMessage.trim() || isSendingMessage">
-            <ion-icon name="send-outline"></ion-icon>
-          </ion-button>
-        </ion-item>
-      </div>
-    </ion-card>
+    <ion-button expand="block" fill="outline" color="success" (click)="openInMessages()">
+      <ion-icon name="chatbubbles-outline" slot="start"></ion-icon>
+      Open in Messages tab
+    </ion-button>
   </div>
 
   <div *ngIf="!isLoadingRequest && !ingredientRequest" class="error-container">
