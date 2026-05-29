@@ -68,6 +68,7 @@ export class InventoryManagementPage implements OnInit {
   showSupplyOrderForm = false;
   supplyNotes = '';
   supplyDeliveryDate = '';
+  supplyMinDate = '';
   selectedSupplyPaymentMethod: 'cod' | 'paymaya_sandbox' | 'paypal_sandbox' = 'cod';
   
   // Order review/summary state
@@ -140,6 +141,7 @@ export class InventoryManagementPage implements OnInit {
 
   ngOnInit() {
     this.checkAuthentication();
+    this.supplyMinDate = this.formatDateAsYYYYMMDD(new Date());
     console.log('[InventoryPage] ngOnInit - userRole:', this.userRole);
 
     if (this.userRole === 'karenderia_owner') {
@@ -165,6 +167,13 @@ export class InventoryManagementPage implements OnInit {
 
     console.log('[InventoryPage] Invalid role:', this.userRole);
     this.showToast('This page is only available for karenderia owners and suppliers.', 'warning');
+  }
+
+  private formatDateAsYYYYMMDD(d: Date): string {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   async ionViewWillEnter() {
@@ -694,6 +703,16 @@ export class InventoryManagementPage implements OnInit {
       return;
     }
 
+    if (this.supplyDeliveryDate) {
+      const selected = new Date(this.supplyDeliveryDate);
+      const min = new Date(this.supplyMinDate || this.formatDateAsYYYYMMDD(new Date()));
+      selected.setHours(0,0,0,0);
+      min.setHours(0,0,0,0);
+      if (selected < min) {
+        this.showToast('Delivery date cannot be in the past. Please choose today or later.', 'warning');
+        return;
+      }
+    }
     const loading = await this.loadingController.create({
       message: 'Submitting order...'
     });

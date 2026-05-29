@@ -346,7 +346,12 @@
           <!-- Delivery Date (Optional) -->
           <ion-item lines="full" class="form-row" *ngIf="showOrderReview">
             <ion-label position="stacked">Delivery Date (Optional)</ion-label>
-            <ion-input type="date" [(ngModel)]="supplyDeliveryDate" placeholder="mm/dd/yyyy"></ion-input>
+            <ion-input
+              type="date"
+              [(ngModel)]="supplyDeliveryDate"
+              placeholder="mm/dd/yyyy"
+              [attr.min]="supplyMinDate">
+            </ion-input>
           </ion-item>
 
           <!-- Notes (Optional) -->
