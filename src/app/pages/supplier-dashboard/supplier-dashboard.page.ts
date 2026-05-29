@@ -3,6 +3,14 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { IonicModule } from '@ionic/angular';
 import { AuthService, User } from '../../services/auth.service';
+import { InventoryService, SupplyOrder } from '../../services/inventory.service';
+
+interface PendingOrderGroup {
+  karenderiaId: number;
+  karenderiaName: string;
+  ordersCount: number;
+  orders: SupplyOrder[];
+}
 
 @Component({
   selector: 'app-supplier-dashboard',
@@ -11,6 +19,9 @@ import { AuthService, User } from '../../services/auth.service';
   template: `
     <ion-header [translucent]="true" class="modern-header">
       <ion-toolbar class="gradient-toolbar">
+        <ion-buttons slot="start">
+          <ion-back-button (click)="goBack()" defaultHref="/home"></ion-back-button>
+        </ion-buttons>
         <ion-title>
           <div class="header-title">
             <ion-icon name="storefront" color="light"></ion-icon>
@@ -99,6 +110,45 @@ import { AuthService, User } from '../../services/auth.service';
               <div class="info-row">
                 <span class="label">Status:</span>
                 <ion-badge color="success">Active</ion-badge>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </div>
+
+        <!-- Pending Orders Section -->
+        <div class="pending-orders-section">
+          <h2 class="section-title">Pending Orders from Karenderias</h2>
+          
+          <div *ngIf="pendingOrderGroups.length === 0" class="empty-pending">
+            <ion-icon name="checkmark-circle-outline"></ion-icon>
+            <p>No pending orders at the moment</p>
+          </div>
+
+          <ion-card *ngFor="let group of pendingOrderGroups" class="pending-order-card">
+            <ion-card-header>
+              <ion-card-title>{{ group.karenderiaName }}</ion-card-title>
+              <ion-card-subtitle>{{ group.ordersCount }} pending order(s)</ion-card-subtitle>
+            </ion-card-header>
+            <ion-card-content>
+              <div *ngFor="let order of group.orders" class="order-item">
+                <p><strong>Order #{{ order.id }}</strong> - {{ order.items?.length || 0 }} items</p>
+                <p>Total: ₱{{ order.total_amount | number:'1.2-2' }}</p>
+              </div>
+              <div class="order-actions">
+                <ion-button 
+                  fill="outline" 
+                  color="primary" 
+                  (click)="messageKarenderia(group)">
+                  <ion-icon name="chatbubbles-outline" slot="start"></ion-icon>
+                  Message
+                </ion-button>
+                <ion-button 
+                  fill="outline" 
+                  color="success" 
+                  (click)="goToOrders()">
+                  <ion-icon name="checkmark-circle-outline" slot="start"></ion-icon>
+                  View All Orders
+                </ion-button>
               </div>
             </ion-card-content>
           </ion-card>
@@ -265,18 +315,127 @@ import { AuthService, User } from '../../services/auth.service';
       --padding-start: 8px;
       --padding-end: 8px;
     }
+
+    .pending-orders-section {
+      margin-top: 24px;
+    }
+
+    .empty-pending {
+      text-align: center;
+      padding: 32px 16px;
+      color: #9ca3af;
+    }
+
+    .empty-pending ion-icon {
+      font-size: 48px;
+      color: #d1d5db;
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    .pending-order-card {
+      margin-bottom: 12px;
+      border-left: 4px solid #fbbf24;
+    }
+
+    .order-item {
+      padding: 8px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .order-item:last-child {
+      border-bottom: none;
+    }
+
+    .order-item p {
+      margin: 4px 0;
+      font-size: 0.9rem;
+      color: #4b5563;
+    }
+
+    .order-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .order-actions ion-button {
+      flex: 1;
+      min-width: 120px;
+    }
   `]
 })
 export class SupplierDashboardPage implements OnInit {
   currentUser: User | null = null;
+  pendingOrderGroups: PendingOrderGroup[] = [];
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private inventoryService: InventoryService
   ) {}
 
   ngOnInit() {
     this.currentUser = this.authService.getCurrentUser();
+    this.loadPendingOrders();
+  }
+
+  async loadPendingOrders() {
+    try {
+      const response = await this.inventoryService.getSupplierSupplyOrders().toPromise();
+      const supplierOrders = response?.data || [];
+      
+      // Group orders by karenderia with 'pending' status
+      const groupMap = new Map<number, PendingOrderGroup>();
+      
+      supplierOrders.forEach((order: SupplyOrder) => {
+        if (order.status === 'pending') {
+          const karenderiaId = order.karenderia_id;
+          const karenderiaName = order.karenderia?.business_name || order.karenderia?.name || `Karenderia #${karenderiaId}`;
+          
+          if (!groupMap.has(karenderiaId)) {
+            groupMap.set(karenderiaId, {
+              karenderiaId,
+              karenderiaName,
+              ordersCount: 0,
+              orders: []
+            });
+          }
+          
+          const group = groupMap.get(karenderiaId)!;
+          group.ordersCount++;
+          group.orders.push(order);
+        }
+      });
+      
+      this.pendingOrderGroups = Array.from(groupMap.values());
+    } catch (error) {
+      console.error('Error loading pending orders:', error);
+      this.pendingOrderGroups = [];
+    }
+  }
+
+  messageKarenderia(group: PendingOrderGroup) {
+    // Navigate to the first pending order's messaging page
+    if (group.orders.length > 0) {
+      this.router.navigate(['/inventory-management'], {
+        queryParams: {
+          segment: 'supplier-orders',
+          openMessaging: group.orders[0].id
+        }
+      });
+    }
+  }
+
+  goToOrders() {
+    this.router.navigate(['/inventory-management'], {
+      queryParams: { segment: 'supplier-orders' }
+    });
+  }
+
+  goBack() {
+    this.router.navigate(['/home']);
   }
 
   goToInventory() {
@@ -292,7 +451,7 @@ export class SupplierDashboardPage implements OnInit {
   }
 
   goToMessages() {
-    this.router.navigate(['/api/messages/conversations']); // or create a proper page
+    this.router.navigate(['/supplier-home'], { queryParams: { tab: 'messages' } });
   }
 
   goToProfile() {

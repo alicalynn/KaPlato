@@ -22,12 +22,15 @@ export class SupplyOrderMessagingPage implements OnInit, AfterViewChecked, OnDes
   @Input() karenderiaId: number = 0;
   @Input() otherPartyName: string = 'Other Party';
   @Input() onDismiss?: () => void;  // Callback to refresh parent's unread count
+  /** When true, hides modal header (used inside routed messages page). */
+  @Input() embeddedMode = false;
   @ViewChild(IonContent) private ionContent?: IonContent;
 
   messages: SupplyOrderMessage[] = [];
   newMessage: string = '';
   currentUserId: string = '';
   isSendingMessage = false;
+  isLoadingMessages = true;
   private shouldScroll = false;
   private pollSubscription?: Subscription;
   private lastMessageId = 0;
@@ -82,6 +85,7 @@ export class SupplyOrderMessagingPage implements OnInit, AfterViewChecked, OnDes
       )
       .subscribe({
         next: (messages) => {
+          this.isLoadingMessages = false;
           const newestId = messages.length ? messages[messages.length - 1].id : 0;
           
           // Only update messages if there are new messages or count changed
@@ -92,6 +96,7 @@ export class SupplyOrderMessagingPage implements OnInit, AfterViewChecked, OnDes
           }
         },
         error: (error) => {
+          this.isLoadingMessages = false;
           console.error('Error loading supply order messages:', error);
         }
       });

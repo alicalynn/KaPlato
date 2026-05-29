@@ -348,6 +348,52 @@
 
     </div>
 
+      <!-- Messages from Suppliers Section -->
+      <ion-card class="messages-section-card" *ngIf="karenderia">
+        <ion-card-header>
+          <div class="card-header-title">
+            <ion-card-title>
+              <ion-icon name="chatbubbles" color="primary"></ion-icon>
+              Supplier Messages
+            </ion-card-title>
+            <ion-badge *ngIf="unreadMessagesCount > 0" color="danger">{{ unreadMessagesCount }}</ion-badge>
+          </div>
+        </ion-card-header>
+        
+        <ion-card-content>
+          <div *ngIf="supplierMessages.length === 0" class="empty-messages">
+            <ion-icon name="chatbubbles-outline"></ion-icon>
+            <p>No messages from suppliers yet</p>
+          </div>
+
+          <div *ngFor="let message of supplierMessages" class="message-item">
+            <div class="message-header">
+              <strong>{{ message.supplier?.name || 'Supplier' }}</strong>
+              <small>{{ message.created_at | date:'short' }}</small>
+            </div>
+            <p class="message-text">{{ message.message | slice:0:100 }}{{ message.message.length > 100 ? '...' : '' }}</p>
+            <ion-button 
+              fill="clear" 
+              size="small" 
+              color="primary"
+              (click)="replyToSupplier(message)">
+              <ion-icon name="chatbubbles-outline" slot="start"></ion-icon>
+              Reply
+            </ion-button>
+          </div>
+
+          <ion-button 
+            *ngIf="supplierMessages.length > 0"
+            expand="block" 
+            fill="outline" 
+            color="primary"
+            (click)="viewAllMessages()">
+            <ion-icon name="chatbubbles" slot="start"></ion-icon>
+            View All Messages
+          </ion-button>
+        </ion-card-content>
+      </ion-card>
+
     <!-- Floating Action Button -->
     <ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="karenderia">
       <ion-fab-button color="primary">

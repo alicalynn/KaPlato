@@ -1137,3 +1137,98 @@
 .view-all-reviews {
   margin-top: 12px;
 }
+
+// Messages Section Styling
+.messages-section-card {
+  margin-top: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  
+  ion-card-header {
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    
+    .card-header-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      
+      ion-card-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+        font-size: 1.2rem;
+        
+        ion-icon {
+          font-size: 1.5rem;
+          color: #3b82f6;
+        }
+      }
+    }
+    
+    ion-badge {
+      margin: 0;
+    }
+  }
+}
+
+.empty-messages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+  
+  ion-icon {
+    font-size: 3rem;
+    color: #d1d5db;
+    margin-bottom: 12px;
+  }
+  
+  p {
+    text-align: center;
+    font-size: 0.95rem;
+  }
+}
+
+.message-item {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 0.2s;
+  margin-bottom: 12px;
+  
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: #d1d5db;
+  }
+  
+  .message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    
+    strong {
+      font-size: 0.95rem;
+      color: #111827;
+    }
+    
+    small {
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+  }
+  
+  .message-text {
+    color: #374151;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+}

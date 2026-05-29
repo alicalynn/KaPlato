@@ -1,68 +1,80 @@
-<app-owner-shell activePage="messages" sectionLabel="Kitchen">
-  <div class="messages-container">
-    <!-- Inbox: supplier name + last message -->
-    <div *ngIf="!activeChat" class="inbox-view">
-      <div class="conversations-header">
-        <h1>Messages</h1>
-        <button type="button" (click)="loadInbox()" class="refresh-btn" aria-label="Refresh">
-          <ion-icon name="refresh-outline"></ion-icon>
-        </button>
+<div class="supplier-messages-card">
+  <div *ngIf="!activeChat" class="inbox-view">
+    <div class="supplier-messages-card-header">
+      <div class="title-row">
+        <ion-icon name="chatbubbles" color="success"></ion-icon>
+        <h2>Messages</h2>
+        <span *ngIf="unreadCount > 0" class="header-unread-pill" aria-label="Unread messages">
+          {{ formatUnreadBadge(unreadCount) }}
+        </span>
       </div>
-
-      <div class="search-box">
-        <ion-icon name="search-outline"></ion-icon>
-        <input
-          type="text"
-          placeholder="Search by supplier..."
-          [(ngModel)]="searchTerm"
-          class="search-input"
-        >
-      </div>
-
-      <div *ngIf="isLoadingInbox" class="loading-state">
-        <ion-spinner name="crescent" color="primary"></ion-spinner>
-        <p>Loading messages...</p>
-      </div>
-
-      <div *ngIf="!isLoadingInbox" class="conversations">
-        <button
-          type="button"
-          *ngFor="let thread of getFilteredThreads()"
-          class="conversation-item"
-          (click)="openThread(thread)"
-        >
-          <span class="conversation-avatar" aria-hidden="true">
-            {{ thread.supplierName.charAt(0).toUpperCase() }}
-          </span>
-          <span class="conversation-content">
-            <span class="conversation-header-row">
-              <span class="conversation-user">{{ thread.supplierName }}</span>
-              <span class="conversation-time">{{ formatTime(thread.lastMessageAt) }}</span>
-            </span>
-            <span class="conversation-preview">{{ thread.lastMessage }}</span>
-          </span>
-          <span *ngIf="thread.unreadCount > 0" class="thread-unread-badge">{{ thread.unreadCount }}</span>
-          <ion-icon name="chevron-forward-outline" class="chevron" aria-hidden="true"></ion-icon>
-        </button>
-
-        <div *ngIf="getFilteredThreads().length === 0" class="empty-state">
-          <ion-icon name="chatbubble-outline"></ion-icon>
-          <p>No messages yet</p>
-          <small>When you chat with a supplier, the conversation appears here</small>
-        </div>
-      </div>
+      <button type="button" (click)="loadInbox()" class="refresh-btn" aria-label="Refresh messages">
+        <ion-icon name="refresh-outline"></ion-icon>
+      </button>
     </div>
 
-    <!-- Supply order chat -->
-    <ng-container *ngIf="activeChat as chat">
+    <p class="messages-subtitle">Chat with karenderia owners about orders and ingredient requests</p>
+
+    <div class="search-box">
+      <ion-icon name="search-outline"></ion-icon>
+      <input
+        type="text"
+        placeholder="Search by karenderia or message..."
+        [(ngModel)]="searchTerm"
+        class="search-input"
+      >
+    </div>
+
+    <div *ngIf="isLoadingInbox" class="loading-state">
+      <ion-spinner name="crescent" color="success"></ion-spinner>
+      <p>Loading messages...</p>
+    </div>
+
+    <div *ngIf="!isLoadingInbox" class="conversations">
+      <button
+        type="button"
+        *ngFor="let thread of getFilteredThreads()"
+        class="conversation-item"
+        [class.has-unread]="thread.unreadCount > 0"
+        (click)="openThread(thread)"
+      >
+        <span class="conversation-avatar" aria-hidden="true">
+          {{ thread.contactName.charAt(0).toUpperCase() }}
+        </span>
+        <span class="conversation-content">
+          <span class="conversation-header-row">
+            <span class="conversation-user">{{ thread.contactName }}</span>
+            <span class="conversation-time">{{ formatTime(thread.lastMessageAt) }}</span>
+          </span>
+          <span class="conversation-preview" [class.unread-preview]="thread.unreadCount > 0">
+            {{ thread.lastMessage }}
+          </span>
+          <span class="thread-type-tag" *ngIf="thread.type === 'supply'">Supply order</span>
+          <span class="thread-type-tag request" *ngIf="thread.type === 'request'">Ingredient request</span>
+        </span>
+        <span *ngIf="thread.unreadCount > 0" class="thread-unread-badge" aria-label="Unread count">
+          {{ formatUnreadBadge(thread.unreadCount) }}
+        </span>
+        <ion-icon name="chevron-forward-outline" class="chevron" aria-hidden="true"></ion-icon>
+      </button>
+
+      <div *ngIf="getFilteredThreads().length === 0" class="empty-state">
+        <ion-icon name="chatbubble-outline"></ion-icon>
+        <p>No messages yet</p>
+        <small>When a karenderia messages you, it will show up here</small>
+      </div>
+    </div>
+  </div>
+
+  <ng-container *ngIf="activeChat as chat">
     <div *ngIf="chat.type === 'supply' && chat.supplyOrder" class="chat-view">
-      <div class="conversation-header">
+      <div class="supplier-messages-card-header chat-header">
         <button type="button" class="back-btn" (click)="backToInbox()">
           <ion-icon name="arrow-back-outline"></ion-icon>
         </button>
         <div class="header-info">
-          <h2>{{ chat.supplyOrder.supplier?.name || 'Supplier' }}</h2>
-          <p class="request-title">Order #{{ chat.supplyOrder.id }}</p>
+          <h2>{{ chat.supplyOrder.karenderia?.business_name || chat.supplyOrder.karenderia?.name || 'Karenderia' }}</h2>
+          <p class="request-title">Supply order #{{ chat.supplyOrder.id }}</p>
         </div>
       </div>
       <div class="embedded-chat">
@@ -70,15 +82,14 @@
           [orderId]="chat.supplyOrder.id"
           [supplierId]="chat.supplyOrder.supplier_id"
           [karenderiaId]="chat.supplyOrder.karenderia_id"
-          [otherPartyName]="chat.supplyOrder.supplier?.name || 'Supplier'"
+          [otherPartyName]="chat.supplyOrder.karenderia?.business_name || chat.supplyOrder.karenderia?.name || 'Karenderia'"
           [embeddedMode]="true">
         </app-supply-order-messaging>
       </div>
     </div>
 
-    <!-- Ingredient request chat -->
     <div *ngIf="chat.type === 'request' && chat.conversation" class="chat-view">
-      <div class="conversation-header">
+      <div class="supplier-messages-card-header chat-header">
         <button type="button" class="back-btn" (click)="backToInbox()">
           <ion-icon name="arrow-back-outline"></ion-icon>
         </button>
@@ -93,7 +104,7 @@
 
       <ion-content #messageContent class="messages-content">
         <div *ngIf="isLoadingMessages" class="loading-messages">
-          <ion-spinner name="crescent" color="primary"></ion-spinner>
+          <ion-spinner name="crescent" color="success"></ion-spinner>
         </div>
 
         <div *ngIf="!isLoadingMessages" class="messages-list">
@@ -152,6 +163,5 @@
         </button>
       </div>
     </div>
-    </ng-container>
-  </div>
-</app-owner-shell>
+  </ng-container>
+</div>
