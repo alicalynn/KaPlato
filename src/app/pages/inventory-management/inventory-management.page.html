@@ -147,13 +147,7 @@
         </ion-col>
       </ion-row>
     </ion-grid>
-    <!-- <ion-item lines="none" class="suki-filter-item">
-      <ion-label>Suki Suppliers Only</ion-label>
-      <ion-toggle
-        [checked]="marketplaceSukiOnly"
-        (ionChange)="toggleMarketplaceSukiOnly($event.detail.checked)">
-      </ion-toggle>
-    </ion-item> -->
+    
     <div class="suki-count" *ngIf="sukiSuppliers.length > 0">
       You have {{ sukiSuppliers.length }} Suki supplier{{ sukiSuppliers.length > 1 ? 's' : '' }}.
     </div>

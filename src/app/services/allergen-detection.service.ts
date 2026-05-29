@@ -30,6 +30,7 @@ export interface MealSafetyAnalysis {
 })
 export class AllergenDetectionService {
   private userAllergens: any[] = [];
+  private hasConfiguredAllergens = false;
   private allergenWarnings$ = new BehaviorSubject<AllergenWarning[]>([]);
   private readonly defaultAllergens = ['Peanuts', 'Tree Nuts', 'Shellfish', 'Fish', 'Eggs', 'Dairy', 'Soy', 'Wheat'];
   
@@ -120,14 +121,23 @@ export class AllergenDetectionService {
     this.userService.currentUserProfile$.subscribe(userProfile => {
       if (userProfile && Array.isArray(userProfile.allergens) && userProfile.allergens.length > 0) {
         this.userAllergens = userProfile.allergens;
+        this.hasConfiguredAllergens = true;
       } else if (userProfile && Array.isArray(userProfile.allergies) && userProfile.allergies.length > 0) {
         // Fallback to allergies array if available
         this.userAllergens = userProfile.allergies.map(allergy => ({
           name: this.normalizeAllergenName(allergy),
           severity: 'moderate' // default severity
         }));
+        this.hasConfiguredAllergens = true;
       } else {
-        this.userAllergens = this.getStoredOrDefaultAllergens();
+        const storedSettings = this.getStoredSelectedAllergens();
+        if (storedSettings.length > 0) {
+          this.userAllergens = storedSettings;
+          this.hasConfiguredAllergens = true;
+        } else {
+          this.userAllergens = this.defaultAllergens.map(name => ({ name, severity: 'moderate' as const }));
+          this.hasConfiguredAllergens = false;
+        }
       }
     });
   }
@@ -160,7 +170,7 @@ export class AllergenDetectionService {
     return aliasMap[lower] || trimmed;
   }
 
-  private getStoredOrDefaultAllergens(): Array<{ name: string; severity: 'mild' | 'moderate' | 'severe' }> {
+  private getStoredSelectedAllergens(): Array<{ name: string; severity: 'mild' | 'moderate' | 'severe' }> {
     try {
       const storedSettings = localStorage.getItem('allergen-settings');
       if (storedSettings) {
@@ -188,7 +198,7 @@ export class AllergenDetectionService {
       console.warn('Unable to parse allergen settings, using defaults', error);
     }
 
-    return this.defaultAllergens.map(name => ({ name, severity: 'moderate' as const }));
+    return [];
   }
 
   getEffectiveUserAllergens(): Array<{ name: string; severity: 'mild' | 'moderate' | 'severe' }> {
@@ -199,7 +209,11 @@ export class AllergenDetectionService {
       })).filter(allergen => !!allergen.name);
     }
 
-    return this.getStoredOrDefaultAllergens();
+    return this.defaultAllergens.map(name => ({ name, severity: 'moderate' as const }));
+  }
+
+  hasConfiguredUserAllergens(): boolean {
+    return this.hasConfiguredAllergens;
   }
 
   /**
@@ -454,7 +468,7 @@ export class AllergenDetectionService {
   updateUserAllergens(allergens: any[]) {
     this.userAllergens = Array.isArray(allergens) && allergens.length > 0
       ? allergens
-      : this.getStoredOrDefaultAllergens();
+      : this.getStoredSelectedAllergens();
   }
 
   /**

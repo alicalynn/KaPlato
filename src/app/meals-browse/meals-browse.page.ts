@@ -43,8 +43,12 @@ export class MealsBrowsePage implements OnInit, OnDestroy {
   }
 
   private initializeAllergenDefaults() {
-    const effectiveAllergens = this.allergenDetectionService.getEffectiveUserAllergens();
-    this.activeAllergens = effectiveAllergens.map(allergen => allergen.name);
+    if (this.allergenDetectionService.hasConfiguredUserAllergens()) {
+      const effectiveAllergens = this.allergenDetectionService.getEffectiveUserAllergens();
+      this.activeAllergens = effectiveAllergens.map(allergen => allergen.name);
+    } else {
+      this.activeAllergens = [];
+    }
 
     // Default: Don't filter - let users see all meals first
     // They can enable safety filter if they want
@@ -252,6 +256,10 @@ export class MealsBrowsePage implements OnInit, OnDestroy {
 
   hasActiveAllergens(): boolean {
     return this.activeAllergens.length > 0;
+  }
+
+  hasConfiguredAllergens(): boolean {
+    return this.allergenDetectionService.hasConfiguredUserAllergens();
   }
 
   private async showToast(message: string) {

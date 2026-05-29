@@ -100,13 +100,14 @@
               <ion-row>
                 <ion-col size="12" size-md="6" *ngFor="let allergen of getAllergensByCategory(category)">
                   <div class="allergen-item" [ngClass]="{ 'selected': isAllergenSelected(allergen.name) }">
-                    <div class="allergen-header" (click)="toggleAllergen(allergen.name)">
+                    <div class="allergen-header" (click)="toggleAllergen(allergen.name)" role="button" tabindex="0">
                       <div class="allergen-info">
                         <h3>{{ allergen.name }}</h3>
                         <p>{{ allergen.description }}</p>
                       </div>
                       <ion-checkbox 
                         [checked]="isAllergenSelected(allergen.name)"
+                        (click)="$event.stopPropagation()"
                         (ionChange)="toggleAllergen(allergen.name)">
                       </ion-checkbox>
                     </div>
