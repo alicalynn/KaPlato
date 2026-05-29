@@ -194,8 +194,9 @@ export class KarenderiaOrdersPosPage implements OnInit, OnDestroy {
 
   async loadTodaysAnalytics() {
     try {
-      // Use karenderia ID 1 from seeded data
-      this.todaysAnalytics = await this.analyticsService.getSalesAnalytics('1', 'daily');
+      const currentKarenderia = this.karenderiaInfoService.getCurrentKarenderia();
+      const karenderiaId = currentKarenderia?.id?.toString() || '1';
+      this.todaysAnalytics = await this.analyticsService.getSalesAnalytics(karenderiaId, 'daily');
     } catch (error) {
       console.error('Error loading analytics:', error);
     }
@@ -203,8 +204,10 @@ export class KarenderiaOrdersPosPage implements OnInit, OnDestroy {
 
   async loadSeasonalTrends() {
     try {
+      const currentKarenderia = this.karenderiaInfoService.getCurrentKarenderia();
+      const karenderiaId = currentKarenderia?.id?.toString() || '1';
       const currentSeason = this.getCurrentSeason();
-      this.seasonalTrends = await this.analyticsService.getPopularItemsBySeason('1', currentSeason);
+      this.seasonalTrends = await this.analyticsService.getPopularItemsBySeason(karenderiaId, currentSeason);
     } catch (error) {
       console.error('Error loading seasonal trends:', error);
     }
@@ -217,7 +220,15 @@ export class KarenderiaOrdersPosPage implements OnInit, OnDestroy {
     return 'wet';
   }
 
-  // Enhanced process order with detailed analytics
+  getTimeOfDay(): 'breakfast' | 'lunch' | 'merienda' | 'dinner' | 'late-night' {
+    const hour = new Date().getHours();
+    if (hour >= 6 && hour < 10) return 'breakfast';
+    if (hour >= 10 && hour < 14) return 'lunch';
+    if (hour >= 14 && hour < 17) return 'merienda';
+    if (hour >= 17 && hour < 22) return 'dinner';
+    return 'late-night';
+  }
+
   async processOrder() {
     if (this.currentOrder.length === 0) {
       const toast = await this.toastController.create({
@@ -229,6 +240,52 @@ export class KarenderiaOrdersPosPage implements OnInit, OnDestroy {
       return;
     }
 
+    const confirmed = await this.confirmOrderBeforeSubmit();
+    if (!confirmed) {
+      return;
+    }
+
+    await this.submitConfirmedOrder();
+  }
+
+  private async confirmOrderBeforeSubmit(): Promise<boolean> {
+    const itemLines = this.currentOrder
+      .map(item => `• ${item.quantity}x ${item.menuItem.name} — ${this.formatPhp(item.subtotal)}`)
+      .join('\n');
+
+    const messageParts = [
+      this.tableNumber ? `Table: ${this.tableNumber}` : '',
+      `Payment: ${this.paymentMethod.toUpperCase()}`,
+      '',
+      'Items:',
+      itemLines,
+      '',
+      `Total: ${this.formatPhp(this.getOrderTotal())}`,
+      '',
+      'Submit this purchase?',
+    ].filter(part => part.length > 0);
+
+    const alert = await this.alertController.create({
+      header: 'Confirm Purchase',
+      message: messageParts.join('\n'),
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+        },
+        {
+          text: 'Confirm',
+          role: 'confirm',
+        },
+      ],
+    });
+
+    await alert.present();
+    const { role } = await alert.onDidDismiss();
+    return role === 'confirm';
+  }
+
+  private async submitConfirmedOrder() {
     try {
       // Calculate totals and analytics
       const subtotal = this.getOrderTotal();
@@ -256,8 +313,11 @@ export class KarenderiaOrdersPosPage implements OnInit, OnDestroy {
       });
 
       // Create detailed order
+      const currentKarenderia = this.karenderiaInfoService.getCurrentKarenderia();
+      const karenderiaId = currentKarenderia?.id?.toString() || '1';
+      
       const detailedOrder: Omit<DetailedOrder, 'id' | 'orderNumber' | 'placedAt' | 'seasonalData'> = {
-        karenderiaId: '1', // Use karenderia ID 1 from seeded data
+        karenderiaId,
         items: detailedItems,
         customerName: this.customerName,
         customerPhone: this.currentDetailedOrder.customerPhone,
@@ -268,20 +328,47 @@ export class KarenderiaOrdersPosPage implements OnInit, OnDestroy {
         totalAmount,
         paymentMethod: this.paymentMethod,
         orderStatus: 'pending',
-        notes: this.currentDetailedOrder.notes
+        notes: this.currentDetailedOrder.notes,
+        // For POS, orders are paid immediately, so mark as 'completed' instead of 'pending'
+        // The backend will handle inventory deduction and sales analytics
+      };
+      
+      // Convert camelCase to snake_case for backend API
+      const orderPayload = {
+        karenderiaId: karenderiaId,
+        items: detailedItems,
+        customerName: this.customerName || (this.tableNumber ? `Table ${this.tableNumber}` : ''),
+        customerPhone: this.currentDetailedOrder.customerPhone || '',
+        orderType: this.orderType,
+        subtotal,
+        tax,
+        discount,
+        totalAmount,
+        paymentMethod: this.paymentMethod,
+        orderStatus: 'completed',
+        tableNumber: this.tableNumber || '',
+        notes: this.currentDetailedOrder.notes,
+        seasonalData: {
+          season: this.getCurrentSeason(),
+          month: new Date().getMonth() + 1,
+          dayOfWeek: new Date().getDay(),
+          timeOfDay: this.getTimeOfDay()
+        }
       };
 
       // Save to database with analytics
-      const orderId = await this.analyticsService.createDetailedOrder(detailedOrder);
+      const orderId = await this.analyticsService.createDetailedOrder(orderPayload as any);
 
       // Show success message with business insights
-      await this.showOrderSuccessWithInsights(orderId, detailedOrder);
+      await this.showOrderSuccessWithInsights(orderId, orderPayload);
 
       // Clear current order
       this.clearOrder();
+      this.tableNumber = '';
       
       // Reload analytics
       await this.loadTodaysAnalytics();
+      await this.loadSeasonalTrends();
 
     } catch (error) {
       console.error('Error processing order:', error);
@@ -299,33 +386,18 @@ export class KarenderiaOrdersPosPage implements OnInit, OnDestroy {
   }
 
   async showOrderSuccessWithInsights(orderId: string, order: any) {
-    const profitMargin = order.items.reduce((total: number, item: any) => total + item.profitMargin, 0);
-    const profitPercentage = ((profitMargin / order.totalAmount) * 100).toFixed(1);
+    const messageParts = [
+      'Your sale has been recorded.',
+      this.tableNumber ? `Table: ${this.tableNumber}` : '',
+      orderId ? `Reference: #${orderId}` : '',
+      `Total paid: ${this.formatPhp(order.totalAmount)}`,
+      'Stock and sales totals have been updated.',
+    ].filter(part => part.length > 0);
 
     const alert = await this.alertController.create({
-      header: 'Order Completed Successfully!',
-      message: `
-        <div style="text-align: left;">
-          <p><strong>Order Total:</strong> ${this.formatPhp(order.totalAmount)}</p>
-          <p><strong>Profit:</strong> ${this.formatPhp(profitMargin)} (${profitPercentage}%)</p>
-          <p><strong>Season:</strong> ${this.getCurrentSeason().charAt(0).toUpperCase() + this.getCurrentSeason().slice(1)}</p>
-          <br>
-          <p><strong>📊 Business Insight:</strong></p>
-          <p>${this.getOrderInsight(order)}</p>
-        </div>
-      `,
-      buttons: [
-        {
-          text: 'View Analytics',
-          handler: () => {
-            this.showDetailedAnalytics();
-          }
-        },
-        {
-          text: 'New Order',
-          role: 'cancel'
-        }
-      ]
+      header: 'Purchase Successful',
+      message: messageParts.join('\n'),
+      buttons: ['OK'],
     });
 
     await alert.present();
@@ -470,20 +542,11 @@ export class KarenderiaOrdersPosPage implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * @deprecated Use processOrder() instead - this method is a legacy stub
+   */
   processPayment() {
-    if (!this.tableNumber) {
-      console.log('Please enter a table number');
-      return;
-    }
-
-    if (this.currentOrder.length === 0) {
-      console.log('Please add items to the order');
-      return;
-    }
-
-    // Process payment logic here
-    console.log('Payment processed successfully!');
-    this.clearOrder();
+    this.processOrder();
   }
 
   logout() {

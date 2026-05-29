@@ -397,6 +397,196 @@
         }
       }
     }
+
+    .transaction-history {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      border: 1px solid #f1f5f9;
+      margin-bottom: 28px;
+      overflow: hidden;
+
+      .transaction-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        padding: 20px 24px;
+        border-bottom: 1px solid #e2e8f0;
+        background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+
+        h3 {
+          margin: 0 0 4px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 18px;
+          color: #1e293b;
+
+          ion-icon {
+            color: #6366f1;
+          }
+        }
+
+        .card-subtitle {
+          margin: 0;
+          font-size: 13px;
+          color: #64748b;
+        }
+      }
+
+      .history-filters {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+
+        .filter-btn {
+          border: 1px solid #cbd5e1;
+          background: #fff;
+          color: #475569;
+          padding: 6px 14px;
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+
+          &.active {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-color: transparent;
+            color: #fff;
+          }
+        }
+      }
+
+      .transaction-content {
+        padding: 0;
+      }
+
+      .transaction-list {
+        max-height: 320px;
+        overflow-y: auto;
+      }
+
+      .transaction-row {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 140px 1fr auto;
+        gap: 16px;
+        align-items: start;
+        padding: 16px 24px;
+        border: none;
+        border-bottom: 1px solid #f1f5f9;
+        background: #fff;
+        text-align: left;
+        cursor: pointer;
+        transition: background 0.15s ease;
+
+        &:hover,
+        &.selected {
+          background: #f8fafc;
+        }
+
+        &.selected {
+          border-left: 4px solid #6366f1;
+          padding-left: 20px;
+        }
+      }
+
+      .tx-time {
+        display: block;
+        font-weight: 700;
+        color: #0f172a;
+        font-size: 14px;
+      }
+
+      .tx-ref {
+        display: block;
+        font-size: 12px;
+        color: #94a3b8;
+        margin-top: 2px;
+      }
+
+      .tx-table {
+        display: block;
+        font-weight: 600;
+        color: #6366f1;
+        font-size: 13px;
+        margin-bottom: 4px;
+
+        &.muted {
+          color: #64748b;
+        }
+      }
+
+      .tx-items {
+        display: block;
+        font-size: 12px;
+        color: #64748b;
+        line-height: 1.4;
+      }
+
+      .tx-amount {
+        display: block;
+        font-weight: 800;
+        color: #0f172a;
+        font-size: 15px;
+        text-align: right;
+      }
+
+      .tx-payment {
+        display: block;
+        font-size: 11px;
+        color: #94a3b8;
+        text-align: right;
+        margin-top: 2px;
+        text-transform: uppercase;
+      }
+
+      .transaction-detail {
+        padding: 16px 24px 20px;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        font-size: 14px;
+        color: #334155;
+
+        .detail-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 10px;
+        }
+
+        .detail-close {
+          border: none;
+          background: transparent;
+          color: #6366f1;
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        p {
+          margin: 0 0 6px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .transaction-row {
+          grid-template-columns: 1fr;
+          gap: 8px;
+        }
+
+        .tx-amount-block {
+          text-align: left;
+        }
+
+        .tx-amount,
+        .tx-payment {
+          text-align: left;
+        }
+      }
+    }
     
     .dashboard-grid {
       display: grid;

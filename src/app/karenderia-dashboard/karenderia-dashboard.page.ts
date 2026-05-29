@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { MenuService } from '../services/menu.service';
 import { AuthService } from '../services/auth.service';
 import { KarenderiaInfoService } from '../services/karenderia-info.service';
+import { AnalyticsService, PosTransaction } from '../services/analytics.service';
 import { MenuItem, Ingredient, DailySales } from '../models/menu.model';
 import { InventoryService } from '../services/inventory.service';
 import { firstValueFrom } from 'rxjs';
@@ -21,24 +22,37 @@ export class KarenderiaDashboardPage implements OnInit {
   menuItemsCount = 0;
   averageRating = 0;
   isLoading = true;
+  transactionHistory: PosTransaction[] = [];
+  transactionFilter: 'today' | 'all' = 'today';
+  selectedTransaction: PosTransaction | null = null;
 
   constructor(
     private router: Router,
     private menuService: MenuService,
     private authService: AuthService,
     private karenderiaInfoService: KarenderiaInfoService,
-    private inventoryService: InventoryService
+    private inventoryService: InventoryService,
+    private analyticsService: AnalyticsService
   ) { }
 
   async ngOnInit() {
-    this.isLoading = true;
+    await this.refreshDashboard();
+  }
+
+  async ionViewWillEnter() {
+    await this.refreshDashboard(false);
+  }
+
+  private async refreshDashboard(showFullLoader = true) {
+    if (showFullLoader) {
+      this.isLoading = true;
+    }
+
     try {
-      // Reload karenderia data to ensure we have the latest info for the logged-in user
       await this.karenderiaInfoService.reloadKarenderiaData();
       await this.loadDashboardData();
     } catch (error) {
       console.error('Error loading dashboard data:', error);
-      // Continue with empty/default data instead of hanging
     } finally {
       this.isLoading = false;
     }
@@ -50,8 +64,14 @@ export class KarenderiaDashboardPage implements OnInit {
 
       const salesPromise = this.menuService.getDailySales(new Date());
       const alertsPromise = firstValueFrom(this.inventoryService.getLowStockAlerts());
+      const transactionsPromise = this.analyticsService.getRecentTransactions(50, this.transactionFilter);
 
-      const [sales, alertsResponse] = await Promise.all([salesPromise, alertsPromise]);
+      const [sales, alertsResponse, transactions] = await Promise.all([
+        salesPromise,
+        alertsPromise,
+        transactionsPromise,
+      ]);
+      this.transactionHistory = transactions;
       this.todaysSales = sales;
       this.topMeals = (sales.popularItems || []).slice(0, 5).map(item => ({
         itemName: item.itemName,
@@ -82,7 +102,40 @@ export class KarenderiaDashboardPage implements OnInit {
       this.topMeals = [];
       this.menuItemsCount = 0;
       this.averageRating = 0;
+      this.transactionHistory = [];
     }
+  }
+
+  async onTransactionFilterChange() {
+    this.transactionHistory = await this.analyticsService.getRecentTransactions(50, this.transactionFilter);
+  }
+
+  selectTransaction(transaction: PosTransaction) {
+    this.selectedTransaction = transaction;
+  }
+
+  clearSelectedTransaction() {
+    this.selectedTransaction = null;
+  }
+
+  formatTransactionTime(date: Date): string {
+    return new Intl.DateTimeFormat('en-PH', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    }).format(new Date(date));
+  }
+
+  getPaymentLabel(method: string): string {
+    const labels: Record<string, string> = {
+      cash: 'Cash',
+      card: 'Card',
+      gcash: 'GCash',
+      maya: 'Maya',
+    };
+    return labels[method] || method.toUpperCase();
   }
 
   private getAverageRating(menuItems: MenuItem[]): number {

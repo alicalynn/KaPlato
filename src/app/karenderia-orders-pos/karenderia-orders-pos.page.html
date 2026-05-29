@@ -136,7 +136,7 @@
           <!-- Action Buttons -->
           <div class="order-actions" *ngIf="currentOrder.length > 0">
             <button class="clear-btn" (click)="clearOrder()">Clear</button>
-            <button class="pay-btn" (click)="processPayment()" [disabled]="!tableNumber">
+            <button class="pay-btn" (click)="processOrder()" [disabled]="currentOrder.length === 0">
               <ion-icon name="card-outline"></ion-icon>
               Pay
             </button>

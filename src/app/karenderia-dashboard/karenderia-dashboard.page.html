@@ -52,10 +52,79 @@
         </div>
       </div>
 
+      <!-- Transaction History -->
+      <div class="dashboard-card transaction-history">
+        <div class="card-header transaction-header">
+          <div>
+            <h3><ion-icon name="receipt-outline"></ion-icon> Transaction History</h3>
+            <p class="card-subtitle">Review POS sales — check time, table, and items if you missed a click</p>
+          </div>
+          <div class="history-filters">
+            <button
+              type="button"
+              class="filter-btn"
+              [class.active]="transactionFilter === 'today'"
+              (click)="transactionFilter = 'today'; onTransactionFilterChange()">
+              Today
+            </button>
+            <button
+              type="button"
+              class="filter-btn"
+              [class.active]="transactionFilter === 'all'"
+              (click)="transactionFilter = 'all'; onTransactionFilterChange()">
+              All
+            </button>
+            <ion-button fill="outline" size="small" (click)="navigateToPos()">
+              <ion-icon name="calculator-outline" slot="start"></ion-icon>
+              New sale
+            </ion-button>
+          </div>
+        </div>
+        <div class="card-content transaction-content">
+          <div class="transaction-list" *ngIf="transactionHistory.length > 0">
+            <button
+              type="button"
+              class="transaction-row"
+              *ngFor="let tx of transactionHistory"
+              [class.selected]="selectedTransaction?.id === tx.id"
+              (click)="selectTransaction(tx)">
+              <div class="tx-time-block">
+                <span class="tx-time">{{ formatTransactionTime(tx.createdAt) }}</span>
+                <span class="tx-ref">{{ tx.orderNumber }}</span>
+              </div>
+              <div class="tx-details">
+                <span class="tx-table" *ngIf="tx.tableNumber">Table {{ tx.tableNumber }}</span>
+                <span class="tx-table muted" *ngIf="!tx.tableNumber">{{ tx.orderType | titlecase }}</span>
+                <span class="tx-items">{{ tx.itemsSummary }}</span>
+              </div>
+              <div class="tx-amount-block">
+                <span class="tx-amount">{{ formatPhp(tx.totalAmount) }}</span>
+                <span class="tx-payment">{{ getPaymentLabel(tx.paymentMethod) }}</span>
+              </div>
+            </button>
+          </div>
+          <div class="empty-state" *ngIf="transactionHistory.length === 0">
+            No transactions yet. Complete a sale in POS to see history here.
+          </div>
+
+          <div class="transaction-detail" *ngIf="selectedTransaction">
+            <div class="detail-header">
+              <strong>Transaction details</strong>
+              <button type="button" class="detail-close" (click)="clearSelectedTransaction()">Close</button>
+            </div>
+            <p><strong>Time:</strong> {{ formatTransactionTime(selectedTransaction.createdAt) }}</p>
+            <p><strong>Reference:</strong> {{ selectedTransaction.orderNumber }}</p>
+            <p *ngIf="selectedTransaction.tableNumber"><strong>Table:</strong> {{ selectedTransaction.tableNumber }}</p>
+            <p><strong>Items ({{ selectedTransaction.itemCount }}):</strong> {{ selectedTransaction.itemsSummary }}</p>
+            <p><strong>Total:</strong> {{ formatPhp(selectedTransaction.totalAmount) }} · {{ getPaymentLabel(selectedTransaction.paymentMethod) }}</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Main Content Grid -->
       <div class="dashboard-grid">
         <!-- Low Stock Alerts -->
-        <div class="dashboard-card recent-orders">
+        <div class="dashboard-card stock-alerts-card">
           <div class="card-header">
             <h3>Low Stock Alerts</h3>
           </div>

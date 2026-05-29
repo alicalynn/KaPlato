@@ -5,6 +5,21 @@ import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { DetailedOrder, DetailedOrderItem, SalesAnalytics } from '../models/menu.model';
 
+export interface PosTransaction {
+  id: number;
+  orderNumber: string;
+  totalAmount: number;
+  paymentMethod: string;
+  status: string;
+  paymentStatus: string;
+  createdAt: Date;
+  tableNumber: string | null;
+  customerName: string | null;
+  orderType: string;
+  itemsSummary: string;
+  itemCount: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -37,7 +52,8 @@ export class AnalyticsService {
       const detailedOrder = {
         ...order,
         seasonalData,
-        orderStatus: 'pending'
+        // POS orders are paid immediately — mark completed so inventory + analytics update
+        orderStatus: order.orderStatus || 'completed',
       };
 
       const response = await this.http.post<{ data: { id: string } }>(`${this.apiUrl}/orders`, detailedOrder, {
@@ -155,7 +171,25 @@ export class AnalyticsService {
         params
       }).toPromise();
 
-      const analytics = response?.data || null;
+      const raw = response?.data || null;
+      if (!raw) {
+        this.analyticsSubject.next(null);
+        return null;
+      }
+
+      const analytics: SalesAnalytics = {
+        karenderiaId: String(raw.karenderiaId ?? karenderiaId),
+        period,
+        date: raw.date ? new Date(raw.date) : new Date(),
+        totalSales: Number(raw.totalSales ?? 0),
+        totalOrders: Number(raw.totalOrders ?? 0),
+        averageOrderValue: Number(raw.averageOrderValue ?? 0),
+        totalProfit: Number(raw.totalProfit ?? 0),
+        topSellingItems: raw.topSellingItems ?? [],
+        salesByTimeOfDay: raw.salesByTimeOfDay ?? [],
+        seasonalTrends: raw.seasonalTrends ?? [],
+      };
+
       this.analyticsSubject.next(analytics);
       return analytics;
     } catch (error) {
@@ -174,6 +208,55 @@ export class AnalyticsService {
     } catch (error) {
       console.error('Error loading orders:', error);
     }
+  }
+
+  /**
+   * Recent POS / kitchen transactions for dashboard history
+   */
+  async getRecentTransactions(limit = 30, period: 'today' | 'all' = 'today'): Promise<PosTransaction[]> {
+    try {
+      const response = await this.http.get<{ success?: boolean; data: any[] }>(
+        `${this.apiUrl}/orders/recent`,
+        {
+          headers: this.getHeaders(),
+          params: { limit: String(limit), period },
+        }
+      ).toPromise();
+
+      const orders = response?.data || [];
+      return orders.map(order => this.mapOrderToTransaction(order));
+    } catch (error) {
+      console.error('Error loading transaction history:', error);
+      return [];
+    }
+  }
+
+  private mapOrderToTransaction(order: any): PosTransaction {
+    const tracking = order.order_tracking || {};
+    const items = order.order_items || order.orderItems || [];
+
+    const itemsSummary = items
+      .map((item: any) => {
+        const name = item.menu_item?.name || item.menuItem?.name || 'Item';
+        const qty = item.quantity ?? 1;
+        return `${qty}x ${name}`;
+      })
+      .join(', ');
+
+    return {
+      id: Number(order.id),
+      orderNumber: order.order_number || `#${order.id}`,
+      totalAmount: Number(order.total_amount ?? 0),
+      paymentMethod: order.payment_method || 'cash',
+      status: order.status || 'delivered',
+      paymentStatus: order.payment_status || 'paid',
+      createdAt: order.created_at ? new Date(order.created_at) : new Date(),
+      tableNumber: tracking.table_number || null,
+      customerName: tracking.customer_name || order.customer_name || null,
+      orderType: tracking.order_type || 'dine-in',
+      itemsSummary: itemsSummary || 'No items listed',
+      itemCount: items.reduce((sum: number, item: any) => sum + Number(item.quantity ?? 0), 0),
+    };
   }
 
   /**
