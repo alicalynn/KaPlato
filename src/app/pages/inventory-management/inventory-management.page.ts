@@ -55,6 +55,9 @@ export class InventoryManagementPage implements OnInit {
 
   marketplaceListings: SupplierListing[] = [];
   visibleMarketplaceListings: SupplierListing[] = [];
+  marketplaceSort = '';
+  marketplaceSuppliers: Array<{ id: number; name: string }> = [];
+  marketplaceSelectedSupplier: number | '' = '';
   supplierListings: SupplierListing[] = [];
   ownerOrders: SupplyOrder[] = [];
   supplierOrders: SupplyOrder[] = [];
@@ -300,12 +303,35 @@ export class InventoryManagementPage implements OnInit {
     this.loadMarketplaceListings();
   }
 
+  onMarketplaceCategoryChanged(event: any) {
+    this.marketplaceCategory = event?.detail?.value || '';
+    this.loadMarketplaceListings();
+  }
+
+  onMarketplaceSupplierChanged(event: any) {
+    this.marketplaceSelectedSupplier = event?.detail?.value || '';
+    this.applyMarketplaceFilters();
+  }
+
+  onMarketplaceSortChanged(event: any) {
+    this.marketplaceSort = event?.detail?.value || '';
+    this.applyMarketplaceFilters();
+  }
+
   onMarketplaceSearchChange() {
     if (this.marketplaceSearchDebounceTimer) {
       clearTimeout(this.marketplaceSearchDebounceTimer);
     }
 
     this.marketplaceSearchDebounceTimer = setTimeout(() => {
+      // Build supplier options from listings
+      const suppliersMap = new Map<number, string>();
+      for (const l of this.marketplaceListings) {
+        if (l.supplier?.id && l.supplier?.name) {
+          suppliersMap.set(l.supplier.id, l.supplier.name);
+        }
+      }
+      this.marketplaceSuppliers = Array.from(suppliersMap.entries()).map(([id, name]) => ({ id, name }));
       this.applyMarketplaceFilters();
       this.marketplaceSearchDebounceTimer = null;
     }, 200);
@@ -313,26 +339,41 @@ export class InventoryManagementPage implements OnInit {
 
   private applyMarketplaceFilters() {
     const query = this.marketplaceSearch.trim().toLowerCase();
-    if (!query) {
-      this.visibleMarketplaceListings = [...this.marketplaceListings];
-      return;
+
+    let list = [...this.marketplaceListings];
+
+    if (this.marketplaceCategory && this.marketplaceCategory !== 'all') {
+      list = list.filter(l => (l.category || '').toLowerCase() === this.marketplaceCategory.toLowerCase());
     }
 
-    this.visibleMarketplaceListings = this.marketplaceListings.filter((listing) => {
-      const supplierName = listing.supplier?.name?.toLowerCase() || '';
-      const supplierEmail = listing.supplier?.email?.toLowerCase() || '';
-      const category = listing.category?.toLowerCase() || '';
-      const description = listing.description?.toLowerCase() || '';
-      const itemName = listing.item_name?.toLowerCase() || '';
+    if (this.marketplaceSelectedSupplier) {
+      list = list.filter(l => l.supplier?.id === this.marketplaceSelectedSupplier);
+    }
 
-      return (
-        itemName.includes(query) ||
-        category.includes(query) ||
-        description.includes(query) ||
-        supplierName.includes(query) ||
-        supplierEmail.includes(query)
-      );
-    });
+    if (query) {
+      list = list.filter((listing) => {
+        const supplierName = listing.supplier?.name?.toLowerCase() || '';
+        const supplierEmail = listing.supplier?.email?.toLowerCase() || '';
+        const category = listing.category?.toLowerCase() || '';
+        const description = listing.description?.toLowerCase() || '';
+        const itemName = listing.item_name?.toLowerCase() || '';
+
+        return (
+          itemName.includes(query) ||
+          category.includes(query) ||
+          description.includes(query) ||
+          supplierName.includes(query) ||
+          supplierEmail.includes(query)
+        );
+      });
+    }
+
+    // Apply sort
+    if (this.marketplaceSort === 'cheapest') {
+      list.sort((a, b) => (Number(a.price_per_unit) || 0) - (Number(b.price_per_unit) || 0));
+    }
+
+    this.visibleMarketplaceListings = list;
   }
 
   isSupplierSuki(listing: SupplierListing): boolean {

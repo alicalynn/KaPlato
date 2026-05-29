@@ -85,7 +85,7 @@
 
   <div *ngIf="selectedSegment === 'inventory'" class="filter-container">
     <ion-item>
-      <ion-select value="all" (selectionChange)="onCategoryChanged($event)" placeholder="Filter by Category">
+      <ion-select [(ngModel)]="selectedCategory" interface="popover" (ionChange)="onCategoryChanged($event)" placeholder="Filter by Category">
         <ion-select-option value="all">All Categories</ion-select-option>
         <ion-select-option *ngFor="let category of stats.categories" [value]="category">
           {{ category }}
@@ -95,22 +95,65 @@
   </div>
 
   <div *ngIf="selectedSegment === 'marketplace'" class="filter-container">
-    <ion-item>
-      <ion-input
-        label="Search"
-        labelPlacement="stacked"
-        placeholder="Search supplier item"
-        [(ngModel)]="marketplaceSearch"
-        (ionInput)="onMarketplaceSearchChange()">
-      </ion-input>
-    </ion-item>
-    <ion-item lines="none" class="suki-filter-item">
+    <ion-grid>
+      <ion-row class="ion-align-items-center" style="gap:8px;">
+        <ion-col size="12" size-md="5">
+          <ion-item>
+            <ion-input
+              label="Search"
+              labelPlacement="stacked"
+              placeholder="Search supplier item"
+              [(ngModel)]="marketplaceSearch"
+              (ionInput)="onMarketplaceSearchChange()">
+            </ion-input>
+          </ion-item>
+        </ion-col>
+
+        <ion-col size="6" size-md="2">
+          <ion-item>
+            <ion-select [(ngModel)]="marketplaceCategory" interface="popover" (ionChange)="onMarketplaceCategoryChanged($event)" placeholder="Category">
+              <ion-select-option value="all">All Categories</ion-select-option>
+              <ion-select-option *ngFor="let category of stats.categories" [value]="category">{{ category }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-col>
+
+        <ion-col size="6" size-md="2">
+          <ion-item>
+            <ion-select [(ngModel)]="marketplaceSort" interface="popover" (ionChange)="onMarketplaceSortChanged($event)" placeholder="Sort">
+              <ion-select-option value="">Relevance</ion-select-option>
+              <ion-select-option value="cheapest">Cheapest to Expensive</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-col>
+
+        <ion-col size="6" size-md="2" *ngIf="marketplaceSuppliers.length > 0">
+          <ion-item>
+            <ion-select [(ngModel)]="marketplaceSelectedSupplier" interface="popover" (ionChange)="onMarketplaceSupplierChanged($event)" placeholder="Supplier">
+              <ion-select-option value="">All Suppliers</ion-select-option>
+              <ion-select-option *ngFor="let s of marketplaceSuppliers" [value]="s.id">{{ s.name }}</ion-select-option>
+            </ion-select>
+          </ion-item>
+        </ion-col>
+
+        <ion-col size="6" size-md="1">
+          <ion-item lines="none" class="suki-filter-item">
+            <ion-label style="white-space:nowrap; margin-right:8px;">Suki</ion-label>
+            <ion-toggle
+              [checked]="marketplaceSukiOnly"
+              (ionChange)="toggleMarketplaceSukiOnly($event.detail.checked)">
+            </ion-toggle>
+          </ion-item>
+        </ion-col>
+      </ion-row>
+    </ion-grid>
+    <!-- <ion-item lines="none" class="suki-filter-item">
       <ion-label>Suki Suppliers Only</ion-label>
       <ion-toggle
         [checked]="marketplaceSukiOnly"
         (ionChange)="toggleMarketplaceSukiOnly($event.detail.checked)">
       </ion-toggle>
-    </ion-item>
+    </ion-item> -->
     <div class="suki-count" *ngIf="sukiSuppliers.length > 0">
       You have {{ sukiSuppliers.length }} Suki supplier{{ sukiSuppliers.length > 1 ? 's' : '' }}.
     </div>
