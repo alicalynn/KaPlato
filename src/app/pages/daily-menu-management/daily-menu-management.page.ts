@@ -113,11 +113,6 @@ export class DailyMenuManagementPage implements OnInit {
           min: 1
         },
         {
-          name: 'specialPrice',
-          type: 'number',
-          placeholder: 'Special Price (optional)'
-        },
-        {
           name: 'notes',
           type: 'textarea',
           placeholder: 'Notes (optional)'
@@ -191,11 +186,6 @@ export class DailyMenuManagementPage implements OnInit {
           value: 10
         },
         {
-          name: 'specialPrice',
-          type: 'number',
-          placeholder: 'Special price (optional)'
-        },
-        {
           name: 'notes',
           type: 'textarea',
           placeholder: 'Special notes (optional)'
@@ -216,14 +206,12 @@ export class DailyMenuManagementPage implements OnInit {
               return false;
             }
 
-            const specialPrice = this.parseOptionalNumber(data.specialPrice);
             const notes = this.parseOptionalText(data.notes);
 
             for (const menuItemId of menuItemIds) {
               await this.addMenuItemToDailyMenu({
                 menuItemId,
                 quantity,
-                specialPrice,
                 notes
               });
             }
@@ -245,14 +233,12 @@ export class DailyMenuManagementPage implements OnInit {
     await loading.present();
 
     try {
-      const specialPrice = this.parseOptionalNumber(data.specialPrice);
       const notes = this.parseOptionalText(data.notes);
       const request: CreateDailyMenuRequest = {
         menu_item_id: parseInt(data.menuItemId),
         date: this.selectedDate,
         meal_type: this.selectedMealType,
         quantity: parseInt(data.quantity),
-        special_price: specialPrice,
         notes
       };
 
@@ -384,13 +370,7 @@ export class DailyMenuManagementPage implements OnInit {
     toast.present();
   }
 
-  private parseOptionalNumber(value: any): number | undefined {
-    if (value === null || value === undefined || value === '') {
-      return undefined;
-    }
-    const parsed = parseFloat(String(value).trim());
-    return Number.isFinite(parsed) ? parsed : undefined;
-  }
+  // parseOptionalNumber removed - special price field deprecated
 
   private parseOptionalText(value: any): string | undefined {
     if (value === null || value === undefined) {
@@ -401,11 +381,11 @@ export class DailyMenuManagementPage implements OnInit {
   }
 
   getPrice(item: DailyMenuItem): number {
-    return item.special_price || item.menu_item?.price || 0;
+    return item.menu_item?.price || 0;
   }
 
   hasSpecialPrice(item: DailyMenuItem): boolean {
-    return item.special_price !== null && item.special_price !== undefined;
+    return false;
   }
 
   // Helper methods for template

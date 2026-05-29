@@ -113,7 +113,6 @@ export class MealPlannerPage implements OnInit {
       menu_item: menuItem.menu_item,
       daily_menu_id: menuItem.id,
       quantity: 1, // Default quantity
-      special_price: menuItem.special_price,
       notes: menuItem.notes
     };
     
@@ -124,7 +123,7 @@ export class MealPlannerPage implements OnInit {
     const alert = await this.alertController.create({
       header: 'Add to Meal Plan',
       subHeader: `${menuItem.menu_item.name} from ${karenderia.karenderia.name}`,
-      message: `Price: ₱${menuItem.special_price || menuItem.menu_item.price}`,
+      message: `Price: ₱${menuItem.menu_item.price}`,
       inputs: [
         {
           name: 'quantity',
@@ -169,7 +168,6 @@ export class MealPlannerPage implements OnInit {
         menu_item: menuItem.menu_item,
         daily_menu_id: menuItem.id,
         quantity: quantity,
-        special_price: menuItem.special_price,
         notes: menuItem.notes
       });
     } else {
@@ -180,7 +178,6 @@ export class MealPlannerPage implements OnInit {
         menu_item: menuItem.menu_item,
         daily_menu_id: menuItem.id,
         quantity: quantity,
-        special_price: menuItem.special_price,
         notes: menuItem.notes
       }];
     }
@@ -213,7 +210,7 @@ export class MealPlannerPage implements OnInit {
   getTotalPrice(): number {
     const items = this.getSelectedItemsForCurrentMeal();
     return items.reduce((total, item) => {
-      const price = item.special_price || item.menu_item.price;
+      const price = item.menu_item.price;
       return total + (price * item.quantity);
     }, 0);
   }
@@ -272,11 +269,11 @@ export class MealPlannerPage implements OnInit {
   }
 
   getPrice(menuItem: KarenderiaMenuItem): number {
-    return menuItem.special_price || menuItem.menu_item?.price || 0;
+    return menuItem.menu_item?.price || 0;
   }
 
   hasSpecialPrice(menuItem: KarenderiaMenuItem): boolean {
-    return menuItem.special_price !== null && menuItem.special_price !== undefined;
+    return false;
   }
 
   // Helper methods for template
@@ -307,7 +304,6 @@ export class MealPlannerPage implements OnInit {
       menu_item: item.menu_item,
       daily_menu_id: item.daily_menu_id,
       quantity: Number(item.quantity || 0),
-      special_price: item.special_price,
       notes: item.notes
     }));
   }
