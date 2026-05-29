@@ -1,0 +1,309 @@
+<ion-header [translucent]="true">
+	<ion-toolbar>
+		<ion-buttons slot="start">
+			<ion-back-button defaultHref="/meal-planner" text=""></ion-back-button>
+		</ion-buttons>
+		<ion-title>Full Meal Plan</ion-title>
+	</ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+	<div class="search-filter-section" *ngIf="history.length > 0 && !loading">
+		<ion-searchbar
+			[(ngModel)]="searchQuery"
+			(ionInput)="onSearchChange()"
+			placeholder="Search your meals..."
+			show-clear-button="focus">
+		</ion-searchbar>
+
+		<ion-segment [(ngModel)]="selectedFilter" (ionChange)="onFilterChange()">
+			<ion-segment-button *ngFor="let filter of filterOptions" [value]="filter.value">
+				<ion-label>{{ filter.label }}</ion-label>
+			</ion-segment-button>
+		</ion-segment>
+	</div>
+
+	<div *ngIf="loading" class="loading-container">
+		<ion-spinner name="crescent"></ion-spinner>
+		<p>Loading your meal plan...</p>
+	</div>
+
+	<div *ngIf="!loading && savedMealPlans.length > 0" class="insights-section">
+		<div class="insight-card">
+			<h3>Saved Meal Plans</h3>
+			<div class="history-list" style="padding: 0;">
+				<ion-card class="history-card" *ngFor="let plan of savedMealPlans; trackBy: trackByMealPlanId">
+					<div class="card-content">
+						<div class="image-container">
+							<img src="assets/images/default-food.jpg" alt="Meal plan" class="meal-image">
+							<div class="quantity-badge">{{ plan.totalItems }}</div>
+						</div>
+
+						<div class="meal-info">
+							<h2>{{ plan.title }}</h2>
+							<div class="order-details">
+								<div class="detail-row">
+									<span class="label">Plan date</span>
+									<span class="value">{{ plan.dateRangeLabel }}</span>
+								</div>
+								<div class="detail-row">
+									<span class="label">Meal groups</span>
+									<span class="value">{{ plan.meals.length }}</span>
+								</div>
+								<div class="detail-row">
+									<span class="label">Total cost</span>
+									<span class="value price">₱{{ plan.totalPrice | number:'1.0-0' }}</span>
+								</div>
+							</div>
+
+							<div class="meals-detailed">
+								<div *ngFor="let meal of plan.meals">
+									<h4 class="meal-group-header">
+										{{ meal.mealType | titlecase }}
+										<span class="muted">· {{ meal.date }}</span>
+										<span class="meal-total">₱{{ meal.totalPrice | number:'1.0-0' }}</span>
+									</h4>
+									<ion-list lines="none">
+										<ion-item *ngFor="let item of meal.items">
+											<ion-thumbnail slot="start" *ngIf="item.menu_item?.imageUrl">
+												<img [src]="item.menu_item?.imageUrl" alt="{{ item.menu_item?.name }}">
+											</ion-thumbnail>
+											<ion-label>
+												<h3>{{ item.menu_item?.name || item.menu_item?.menuItemName || 'Item' }}</h3>
+												<p class="muted">{{ item.karenderia?.name || '' }}</p>
+											</ion-label>
+											<div class="item-meta" slot="end">
+												<div class="qty">x{{ item.quantity }}</div>
+												<div class="price">₱{{ (item.special_price ?? item.menu_item?.price) | number:'1.0-0' }}</div>
+											</div>
+										</ion-item>
+									</ion-list>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="card-actions">
+						<ion-button fill="clear" size="small" color="primary" (click)="openSavedMealPlan()">
+							<ion-icon name="create-outline" slot="start"></ion-icon>
+							Edit
+						</ion-button>
+
+						<ion-button fill="clear" size="small" color="danger" (click)="removeSavedMealPlan(plan.id)">
+							<ion-icon name="trash-outline" slot="start"></ion-icon>
+							Delete
+						</ion-button>
+					</div>
+				</ion-card>
+			</div>
+		</div>
+	</div>
+
+	<div *ngIf="!loading && history.length === 0 && savedMealPlans.length === 0" class="empty-state">
+		<ion-icon name="time-outline" class="empty-icon"></ion-icon>
+		<h2>No Meal Plan Yet</h2>
+		<p>Your saved meal plans and past orders will appear here once you start planning meals.</p>
+		<ion-button (click)="goToMealPlanner()" fill="outline">
+			<ion-icon name="restaurant-outline" slot="start"></ion-icon>
+			Build Meal Plan
+		</ion-button>
+	</div>
+
+	<div *ngIf="!loading && history.length > 0">
+		<div class="stats-dashboard">
+			<div class="stats-grid">
+				<div class="stat-card">
+					<ion-icon name="list-outline" class="stat-icon"></ion-icon>
+					<div class="stat-info">
+						<h3>{{ getTotalOrders() }}</h3>
+						<p>Total items</p>
+					</div>
+				</div>
+
+				<div class="stat-card">
+					<ion-icon name="cash-outline" class="stat-icon"></ion-icon>
+					<div class="stat-info">
+						<h3>₱{{ getTotalSpent() | number:'1.0-0' }}</h3>
+						<p>Total spent</p>
+					</div>
+				</div>
+
+				<div class="stat-card">
+					<ion-icon name="pricetag-outline" class="stat-icon"></ion-icon>
+					<div class="stat-info">
+						<h3>₱{{ getAverageOrderValue() | number:'1.0-0' }}</h3>
+						<p>Average order</p>
+					</div>
+				</div>
+
+				<div class="stat-card">
+					<ion-icon name="storefront-outline" class="stat-icon"></ion-icon>
+					<div class="stat-info">
+						<h3>{{ getMostOrderedKarenderia() || '—' }}</h3>
+						<p>Top karenderia</p>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="insights-section" *ngIf="frequentlyOrdered.length > 0 || recentOrders.length > 0">
+			<div class="insight-card" *ngIf="frequentlyOrdered.length > 0">
+				<h3>Frequently Ordered</h3>
+				<div class="horizontal-scroll">
+					<div class="quick-item" *ngFor="let item of frequentlyOrdered.slice(0, 5)" (click)="goToMealDetails(item)">
+						<img [src]="item.menuItemImage || 'assets/images/default-food.jpg'" [alt]="item.menuItemName" class="item-image">
+						<div class="item-info">
+							<h4>{{ item.menuItemName }}</h4>
+							<p>{{ item.karenderiaName }}</p>
+						</div>
+						<ion-button fill="clear" size="small" (click)="$event.stopPropagation(); reorderItem(item)">
+							<ion-icon name="repeat-outline"></ion-icon>
+						</ion-button>
+					</div>
+				</div>
+			</div>
+
+			<div class="insight-card" *ngIf="recentOrders.length > 0">
+				<h3>Recent Orders</h3>
+				<div class="horizontal-scroll">
+					<div class="quick-item" *ngFor="let item of recentOrders.slice(0, 5)" (click)="goToMealDetails(item)">
+						<img [src]="item.menuItemImage || 'assets/images/default-food.jpg'" [alt]="item.menuItemName" class="item-image">
+						<div class="item-info">
+							<h4>{{ item.menuItemName }}</h4>
+							<p>{{ getTimeAgo(item.orderedAt) }} · ₱{{ item.menuItemPrice }}</p>
+						</div>
+						<ion-button fill="clear" size="small" (click)="$event.stopPropagation(); addToFavorites(item)">
+							<ion-icon name="heart-outline"></ion-icon>
+						</ion-button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="results-count" *ngIf="searchQuery || selectedFilter !== 'all'">
+			Showing {{ filteredHistory.length }} result{{ filteredHistory.length !== 1 ? 's' : '' }}
+		</div>
+
+		<div class="history-list" *ngIf="filteredHistory.length > 0">
+			<ion-card class="history-card" *ngFor="let historyItem of filteredHistory; trackBy: trackByHistoryId">
+				<div class="card-content" (click)="goToMealDetails(historyItem)">
+					<div class="image-container">
+						<img [src]="historyItem.menuItemImage || 'assets/images/default-food.jpg'" [alt]="historyItem.menuItemName" class="meal-image">
+						<div class="quantity-badge">{{ historyItem.quantity }}x</div>
+					</div>
+
+					<div class="meal-info">
+						<h2>{{ historyItem.menuItemName }}</h2>
+
+						<div class="karenderia-info" (click)="$event.stopPropagation(); goToKarenderia(historyItem)">
+							<ion-icon name="storefront-outline"></ion-icon>
+							<span>{{ historyItem.karenderiaName }}</span>
+							<ion-icon name="chevron-forward-outline"></ion-icon>
+						</div>
+
+						<div class="order-details">
+							<div class="detail-row">
+								<span class="label">Ordered</span>
+								<span class="value">{{ getTimeAgo(historyItem.orderedAt) }}</span>
+							</div>
+							<div class="detail-row">
+								<span class="label">Price</span>
+								<span class="value price">₱{{ historyItem.menuItemPrice }}</span>
+							</div>
+							<div class="detail-row">
+								<span class="label">Total</span>
+								<span class="value">₱{{ historyItem.menuItemPrice * historyItem.quantity }}</span>
+							</div>
+						</div>
+
+						<div class="rating-section" *ngIf="historyItem.rating && historyItem.rating > 0">
+							<div class="stars">
+								<ion-icon
+									*ngFor="let star of getRatingStars(historyItem.rating)"
+									[name]="star"
+									class="star-icon">
+								</ion-icon>
+							</div>
+							<span class="rating-text">{{ historyItem.rating }}/5</span>
+						</div>
+
+						<div class="review-section" *ngIf="historyItem.review">
+							<p class="review-text">"{{ historyItem.review }}"</p>
+						</div>
+					</div>
+				</div>
+
+				<div class="card-actions">
+					<ion-button fill="clear" size="small" color="primary" (click)="reorderItem(historyItem)">
+						<ion-icon name="repeat-outline" slot="start"></ion-icon>
+						Reorder
+					</ion-button>
+
+					<ion-button fill="clear" size="small" color="tertiary" (click)="addToFavorites(historyItem)">
+						<ion-icon name="heart-outline" slot="start"></ion-icon>
+						Save
+					</ion-button>
+
+					<ion-button fill="clear" size="small" color="warning" *ngIf="!historyItem.rating" (click)="openReviewModal(historyItem)">
+						<ion-icon name="star-outline" slot="start"></ion-icon>
+						Review
+					</ion-button>
+				</div>
+			</ion-card>
+		</div>
+
+		<div *ngIf="filteredHistory.length === 0" class="no-results">
+			<ion-icon name="search-outline" class="no-results-icon"></ion-icon>
+			<h3>No meals found</h3>
+			<p>Try a different search term or filter.</p>
+			<ion-button fill="clear" (click)="searchQuery = ''; selectedFilter = 'all'; applyFilters()">
+				Clear Filters
+			</ion-button>
+		</div>
+	</div>
+
+	<div class="review-modal-content" *ngIf="showReviewModal && selectedHistoryItem">
+		<div class="review-form">
+			<div class="meal-preview">
+				<img
+					[src]="selectedHistoryItem.menuItemImage || 'assets/images/default-food.jpg'"
+					[alt]="selectedHistoryItem.menuItemName"
+					class="preview-image">
+				<div class="preview-info">
+					<h3>{{ selectedHistoryItem.menuItemName }}</h3>
+					<p>{{ selectedHistoryItem.karenderiaName }}</p>
+				</div>
+			</div>
+
+			<div class="rating-input">
+				<h4>Rate this meal</h4>
+				<div class="rating-stars">
+					<ion-button
+						fill="clear"
+						*ngFor="let star of [1,2,3,4,5]"
+						(click)="setUserRating(star)">
+						<ion-icon [name]="star <= userRating ? 'star' : 'star-outline'" color="warning"></ion-icon>
+					</ion-button>
+				</div>
+				<p class="rating-text">{{ userRating || 0 }}/5</p>
+			</div>
+
+			<ion-item lines="none">
+				<ion-textarea
+					[(ngModel)]="userReview"
+					placeholder="Share what you liked about this meal"
+					rows="4">
+				</ion-textarea>
+			</ion-item>
+
+			<div class="card-actions" style="margin-top: 20px;">
+				<ion-button fill="clear" color="medium" (click)="closeReviewModal()">
+					Cancel
+				</ion-button>
+				<ion-button fill="solid" color="primary" (click)="submitReview()">
+					Submit Review
+				</ion-button>
+			</div>
+		</div>
+	</div>
+</ion-content>

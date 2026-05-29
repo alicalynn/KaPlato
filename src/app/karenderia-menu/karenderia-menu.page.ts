@@ -207,19 +207,22 @@ export class KarenderiaMenuPage implements OnInit, OnDestroy {
   }
 
   onDishTypeChange() {
+    const customIngredients = [...this.newMenuItem.customIngredients];
+
     if (this.selectedDishType && this.commonIngredients[this.selectedDishType]) {
       this.showIngredientSelection = true;
-      // Pre-select common ingredients
-      this.newMenuItem.selectedIngredients = this.commonIngredients[this.selectedDishType].map((ing: any) => ({
+      const templateIngredients = this.commonIngredients[this.selectedDishType].map((ing: any) => ({
         ingredientId: this.generateTempId(),
         ingredientName: ing.name,
         quantity: ing.quantity,
         unit: ing.unit,
         cost: ing.cost
       }));
+
+      this.newMenuItem.selectedIngredients = this.mergeIngredientLists(customIngredients, templateIngredients);
     } else {
       this.showIngredientSelection = false;
-      this.newMenuItem.selectedIngredients = [];
+      this.newMenuItem.selectedIngredients = [...customIngredients];
     }
   }
 
@@ -238,6 +241,10 @@ export class KarenderiaMenuPage implements OnInit, OnDestroy {
     } else {
       // Remove ingredient
       this.newMenuItem.selectedIngredients = this.newMenuItem.selectedIngredients.filter(
+        ing => ing.ingredientName !== ingredient.name
+      );
+
+      this.newMenuItem.customIngredients = this.newMenuItem.customIngredients.filter(
         ing => ing.ingredientName !== ingredient.name
       );
     }
@@ -280,14 +287,19 @@ export class KarenderiaMenuPage implements OnInit, OnDestroy {
         {
           text: 'Add',
           handler: (data) => {
-            if (data.name && data.quantity && data.unit && data.cost) {
-              this.newMenuItem.selectedIngredients.push({
+            const ingredientName = (data.name || '').trim();
+
+            if (ingredientName && data.quantity && data.unit && data.cost) {
+              const customIngredient = {
                 ingredientId: this.generateTempId(),
-                ingredientName: data.name,
+                ingredientName,
                 quantity: parseFloat(data.quantity),
                 unit: data.unit,
                 cost: parseFloat(data.cost)
-              });
+              };
+
+              this.newMenuItem.customIngredients.push(customIngredient);
+              this.newMenuItem.selectedIngredients.push(customIngredient);
               return true;
             }
             return false;
@@ -300,7 +312,13 @@ export class KarenderiaMenuPage implements OnInit, OnDestroy {
   }
 
   removeIngredient(index: number) {
-    this.newMenuItem.selectedIngredients.splice(index, 1);
+    const [removedIngredient] = this.newMenuItem.selectedIngredients.splice(index, 1);
+
+    if (removedIngredient) {
+      this.newMenuItem.customIngredients = this.newMenuItem.customIngredients.filter(
+        ingredient => ingredient.ingredientId !== removedIngredient.ingredientId
+      );
+    }
   }
 
   updateIngredientQuantity(index: number, quantity: number) {
@@ -426,7 +444,7 @@ export class KarenderiaMenuPage implements OnInit, OnDestroy {
       preparationTime: item.preparationTime || 15,
       isAvailable: item.isAvailable !== false,
       selectedIngredients: item.ingredients ? [...item.ingredients] : [],
-      customIngredients: []
+      customIngredients: item.ingredients ? [...item.ingredients] : []
     };
     
     // Switch to editing mode
@@ -636,6 +654,21 @@ export class KarenderiaMenuPage implements OnInit, OnDestroy {
     return dishType.split('-').map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(' ');
+  }
+
+  private mergeIngredientLists(
+    customIngredients: MenuIngredient[],
+    templateIngredients: MenuIngredient[]
+  ): MenuIngredient[] {
+    const mergedIngredients = [...customIngredients];
+
+    templateIngredients.forEach((ingredient) => {
+      if (!mergedIngredients.some(existingIngredient => existingIngredient.ingredientName === ingredient.ingredientName)) {
+        mergedIngredients.push(ingredient);
+      }
+    });
+
+    return mergedIngredients;
   }
 
   // Helper method to get appropriate image for menu items

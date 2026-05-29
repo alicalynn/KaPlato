@@ -167,6 +167,23 @@ export class InventoryManagementPage implements OnInit {
     this.showToast('This page is only available for karenderia owners and suppliers.', 'warning');
   }
 
+  async ionViewWillEnter() {
+    this.checkAuthentication();
+
+    if (this.userRole === 'karenderia_owner') {
+      this.loadInventory();
+      this.loadMarketplaceListings();
+      this.loadOwnerOrders();
+      this.loadSukiSuppliers();
+      return;
+    }
+
+    if (this.userRole === 'supplier') {
+      this.loadSupplierListings();
+      this.loadSupplierOrders();
+    }
+  }
+
   private checkAuthentication() {
     const token = localStorage.getItem('auth_token');
     this.userRole = (this.authService.getCurrentUser()?.role as any) || 'customer';

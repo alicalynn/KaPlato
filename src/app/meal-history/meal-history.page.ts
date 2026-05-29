@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IonicModule, NavController, AlertController, ModalController, ToastController } from '@ionic/angular';
 import { Subscription } from 'rxjs';
 import { FavoritesService, MealHistory } from '../services/favorites.service';
+import { MealPlanStorageService, SavedMealPlanSnapshot } from '../services/meal-plan-storage.service';
 
 @Component({
   selector: 'app-meal-history',
@@ -17,6 +18,7 @@ export class MealHistoryPage implements OnInit, OnDestroy {
   filteredHistory: MealHistory[] = [];
   frequentlyOrdered: MealHistory[] = [];
   recentOrders: MealHistory[] = [];
+  savedMealPlans: SavedMealPlanSnapshot[] = [];
   
   searchQuery = '';
   selectedFilter = 'all';
@@ -40,6 +42,7 @@ export class MealHistoryPage implements OnInit, OnDestroy {
 
   constructor(
     private favoritesService: FavoritesService,
+    private mealPlanStorageService: MealPlanStorageService,
     private navController: NavController,
     private alertController: AlertController,
     private modalController: ModalController,
@@ -55,6 +58,8 @@ export class MealHistoryPage implements OnInit, OnDestroy {
         this.loading = false;
       })
     );
+
+    this.loadSavedMealPlans();
   }
 
   ngOnDestroy() {
@@ -64,6 +69,24 @@ export class MealHistoryPage implements OnInit, OnDestroy {
   async ionViewWillEnter() {
     this.loading = true;
     await this.favoritesService.loadHistory();
+    this.loadSavedMealPlans();
+  }
+
+  loadSavedMealPlans() {
+    this.savedMealPlans = this.mealPlanStorageService.loadMealPlans();
+  }
+
+  goToMealPlanner() {
+    this.navController.navigateForward(['/meal-planner']);
+  }
+
+  removeSavedMealPlan(planId: string) {
+    this.mealPlanStorageService.removeMealPlan(planId);
+    this.loadSavedMealPlans();
+  }
+
+  openSavedMealPlan() {
+    this.goToMealPlanner();
   }
 
   onSearchChange() {
@@ -286,6 +309,14 @@ export class MealHistoryPage implements OnInit, OnDestroy {
 
   trackByHistoryId(index: number, item: MealHistory): string {
     return item.id;
+  }
+
+  trackByMealPlanId(index: number, item: SavedMealPlanSnapshot): string {
+    return item.id;
+  }
+
+  formatMealPlanSummary(plan: SavedMealPlanSnapshot): string {
+    return `${plan.totalItems} item${plan.totalItems === 1 ? '' : 's'} · ${plan.meals.length} meal group${plan.meals.length === 1 ? '' : 's'}`;
   }
 
   private async showToast(message: string) {

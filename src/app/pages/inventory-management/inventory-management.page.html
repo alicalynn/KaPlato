@@ -100,7 +100,8 @@
         label="Search"
         labelPlacement="stacked"
         placeholder="Search supplier item"
-        [(ngModel)]="marketplaceSearch">
+        [(ngModel)]="marketplaceSearch"
+        (ionInput)="onMarketplaceSearchChange()">
       </ion-input>
     </ion-item>
     <ion-item lines="none" class="suki-filter-item">
@@ -367,13 +368,13 @@
       </ion-card-content>
     </ion-card>
 
-    <div *ngIf="marketplaceListings.length === 0" class="empty-state">
+    <div *ngIf="visibleMarketplaceListings.length === 0" class="empty-state">
       <ion-icon name="storefront-outline" size="large"></ion-icon>
       <h3>No Supplier Listings Yet</h3>
       <p>Try again later or adjust your search</p>
     </div>
 
-    <ion-card class="inventory-card" *ngFor="let listing of marketplaceListings">
+    <ion-card class="inventory-card" *ngFor="let listing of visibleMarketplaceListings">
       <ion-card-header>
         <div class="supplier-name-row">
           <strong>Supplier: {{ listing.supplier?.name || 'Unknown Supplier' }}</strong>
@@ -498,7 +499,7 @@
     </div>
 
     <!-- Quick Start Guide for New Suppliers -->
-    <ion-card class="inventory-card quick-start-card">
+    <!-- <ion-card class="inventory-card quick-start-card">
       <ion-card-header>
         <ion-card-title>📋 Quick Start Guide</ion-card-title>
         <ion-card-subtitle>Get your supplier business running</ion-card-subtitle>
@@ -546,7 +547,7 @@
           </ion-button>
         </div>
       </ion-card-content>
-    </ion-card>
+    </ion-card> -->
 
     <div *ngIf="supplierListings.length === 0" class="empty-state">
       <ion-icon name="cube-outline" size="large"></ion-icon>

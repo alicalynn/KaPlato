@@ -4,8 +4,8 @@ export const environment = {
   // Choose one of these based on your needs:
   
   // Option 1: Local machine only (default)
-  // apiUrl: 'http://localhost:8000/api',
-  apiUrl: 'https://bodacious-cascade-onshore.ngrok-free.dev/api',
+  apiUrl: 'http://localhost:8000/api',
+  // apiUrl: 'https://bodacious-cascade-onshore.ngrok-free.dev/api',
   
   // Option 2: Local network (other devices on same WiFi)
   // apiUrl: 'http://172.20.10.9:8000/api',

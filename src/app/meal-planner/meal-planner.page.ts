@@ -5,6 +5,7 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { IonicModule, AlertController, LoadingController, ToastController } from '@ionic/angular';
 import { Router } from '@angular/router';
 import { DailyMenuService } from '../services/daily-menu.service';
+import { MealPlanStorageService, MealPlanItemSnapshot } from '../services/meal-plan-storage.service';
 
 interface KarenderiaMenuItem {
   id: number;
@@ -47,7 +48,8 @@ export class MealPlannerPage implements OnInit {
     private alertController: AlertController,
     private loadingController: LoadingController,
     private toastController: ToastController,
-    private router: Router
+    private router: Router,
+    private mealPlanStorageService: MealPlanStorageService
   ) {}
 
   ngOnInit() {
@@ -217,7 +219,7 @@ export class MealPlannerPage implements OnInit {
   }
 
   async saveMealPlan() {
-    const allSelectedItems = Object.values(this.selectedItems).flat();
+    const allSelectedItems = this.getAllSelectedItems();
     
     if (allSelectedItems.length === 0) {
       this.showToast('Please select at least one meal item', 'warning');
@@ -230,22 +232,15 @@ export class MealPlannerPage implements OnInit {
     await loading.present();
 
     try {
-      // Here you would typically save to your backend
-      // For now, we'll just show a success message
+      const savedPlan = this.mealPlanStorageService.saveMealPlan(allSelectedItems);
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
       
       await loading.dismiss();
       
       const alert = await this.alertController.create({
         header: 'Meal Plan Saved!',
-        message: `Your meal plan with ${allSelectedItems.length} items has been saved successfully.`,
+        message: `Your meal plan with ${savedPlan.totalItems} items has been saved successfully.`,
         buttons: [
-          {
-            text: 'View Full Plan',
-            handler: () => {
-              // Navigate to full meal plan view
-            }
-          },
           {
             text: 'OK',
             role: 'cancel'
@@ -254,6 +249,10 @@ export class MealPlannerPage implements OnInit {
       });
       
       await alert.present();
+      console.log('Saved meal plan snapshot:', savedPlan);
+
+      // Automatically navigate to the full meal plan view so user sees saved plan
+      this.router.navigate(['/meal-history']);
       
     } catch (error) {
       await loading.dismiss();
@@ -292,5 +291,24 @@ export class MealPlannerPage implements OnInit {
 
   hasSelectedItems(): boolean {
     return Object.keys(this.selectedItems).length > 0;
+  }
+
+  private getAllSelectedItems(): MealPlanItemSnapshot[] {
+    return Object.values(this.selectedItems).flatMap((value) => {
+      if (Array.isArray(value)) {
+        return value;
+      }
+
+      return value ? [value] : [];
+    }).map((item: any) => ({
+      date: item.date,
+      meal_type: item.meal_type,
+      karenderia: item.karenderia,
+      menu_item: item.menu_item,
+      daily_menu_id: item.daily_menu_id,
+      quantity: Number(item.quantity || 0),
+      special_price: item.special_price,
+      notes: item.notes
+    }));
   }
 }

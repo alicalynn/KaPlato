@@ -32,11 +32,11 @@ This checklist maps the supplier workflow pages needed in KaPlato to the current
   - Suppliers post promos (Incomplete)
 
 ## 5) Suki (Trusted Clients) Page
-- Status: Incomplete
-- Purpose: Supplier marks frequent karenderia buyers as trusted clients and optionally applies preferred rates.
-- Must-have mapping:
-  - Mark regular clients as "Suki" (Incomplete)
-  - Owner marks trusted suppliers as "Suki" (Incomplete)
+Status: Implemented
+Purpose: Supplier marks frequent karenderia buyers as trusted clients and optionally applies preferred rates. (Implemented via favorites/trusted-clients flow)
+Must-have mapping:
+  - Mark regular clients as "Suki" (Implemented)
+  - Owner marks trusted suppliers as "Suki" (Implemented)
 
 ## 6) Owner-Supplier Messaging Page
 - Status: Incomplete

@@ -72,6 +72,8 @@ export interface MealPlan {
 @Injectable({
   providedIn: 'root'
 })
+
+
 export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
@@ -109,7 +111,6 @@ export class AuthService {
   }
 
   login(credentials: LoginCredentials): Observable<AuthResponse> {
-    console.log('🔐 Login attempt - using API URL:', this.apiUrl);
     return this.http.post<AuthResponse>(`${this.apiUrl}/auth/login`, credentials)
       .pipe(
         tap(response => {
@@ -124,7 +125,7 @@ export class AuthService {
           this.currentUserSubject.next(storedUser);
         }),
         catchError(error => {
-          console.error('❌ Login error:', error);
+          console.error('Login error:', error);
           throw error;
         })
       );
@@ -155,9 +156,6 @@ export class AuthService {
     return this.http.post<any>(`${this.apiUrl}/auth/register-karenderia-owner`, registrationData)
       .pipe(
         tap(response => {
-          // DO NOT auto-login pending Karenderia Owner registrations
-          // Users must wait for admin approval and then login explicitly
-          // Clear any existing auth tokens to prevent auto-login
           this.logout();
         }),
         catchError(error => {
@@ -171,9 +169,6 @@ export class AuthService {
     return this.http.post<any>(`${this.apiUrl}/auth/register-supplier`, registrationData)
       .pipe(
         tap(response => {
-          // DO NOT auto-login pending Supplier registrations
-          // Users must wait for admin approval and then login explicitly
-          // Clear any existing auth tokens to prevent auto-login
           this.logout();
         }),
         catchError(error => {

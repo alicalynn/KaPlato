@@ -329,7 +329,7 @@
             <div class="location-actions-section">
               <!-- Get Current Location Button -->
               
-              <!-- <button 
+              <button 
                 type="button"
                 class="primary-btn"
                 (click)="getCurrentLocation()"
@@ -338,7 +338,7 @@
                 [ngClass]="{'disabled-btn': isLocationSet()}">
                 <ion-icon name="locate-outline" slot="start"></ion-icon>
                 {{ isLocationSet() ? 'Current Location (Disabled - Location Already Set)' : 'Use My Current Location' }}
-              </button> -->
+              </button>
 
 
               <div *ngIf="isLocationSet()" class="change-location-section">
